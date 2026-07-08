@@ -25,5 +25,13 @@ __pycache__/
 .ipynb_checkpoints/
 *.ipynb
 
+# 구버전 파일
+accident_agent.py
+accident_agent_local.py
+accident_server.py
+rag.py
+rag_anything.py
+insurance_index.pkl
+
 # 기타
 output/
