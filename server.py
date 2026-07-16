@@ -15,19 +15,19 @@ import uuid
 import sqlite3
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import List
 
 import uvicorn
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from typing import List
 
-UPLOAD_DIR = "uploads"
-FRAMES_DIR = "static/frames"
-os.makedirs(FRAMES_DIR, exist_ok=True)
+UPLOAD_DIR = "static/uploads"
+LOG_DIR    = "logs"
 DB_PATH    = "cases.db"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(LOG_DIR, exist_ok=True)
 
 _conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 
@@ -62,6 +62,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="사고보상 Agent API", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_methods=["*"], allow_headers=["*"])
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -85,33 +89,40 @@ def _save_case(case_id, user_input, result):
               now, now, user_input[:200], result_json))
     _conn.commit()
 
+    # logs/<case_id>.jsonl 에 타임스탬프와 함께 순서대로 추가
+    log_entry = {"timestamp": now, "case_id": case_id, **result}
+    log_path  = os.path.join(LOG_DIR, f"{case_id}.jsonl")
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+
 
 # ── API ───────────────────────────────────────────────
 @app.post("/api/cases")
 async def create_case(
-    user_input:  str              = Form(...),
-    youtube_url: str              = Form(""),
-    extra_data:  str              = Form(""),
-    files:       List[UploadFile] = File(default=[]),
+    user_input: str              = Form(...),
+    video_url:  str              = Form(""),
+    extra_data: str              = Form(""),
+    files:      List[UploadFile] = File(default=[]),
 ):
     case_id = "CASE-" + uuid.uuid4().hex[:8].upper()
 
-    media_paths = []
+    image_urls = []
     for f in files:
         if f.filename:
-            dest = os.path.join(UPLOAD_DIR, f"{case_id}_{f.filename}")
+            ext  = os.path.splitext(f.filename)[1].lower()
+            dest = os.path.join(UPLOAD_DIR, f"{case_id}_{uuid.uuid4().hex[:6]}{ext}")
             with open(dest, "wb") as fp:
                 fp.write(await f.read())
-            media_paths.append(dest)
+            image_urls.append("/" + dest)
 
     from graph.pipeline import run
     result = run(
         user_input=user_input,
         case_id=case_id,
-        media_paths=media_paths,
-        youtube_url=youtube_url,
+        video_url=video_url,
         extra_data=extra_data,
     )
+    result["image_urls"] = image_urls
     _save_case(case_id, user_input, result)
     return {"case_id": case_id, **result}
 
@@ -122,16 +133,24 @@ async def resume_case(
     extra_data: str              = Form(""),
     files:      List[UploadFile] = File(default=[]),
 ):
-    media_paths = []
+    if not extra_data.strip():
+        raise HTTPException(400, "추가 자료 내용을 입력하세요.")
+
+    image_urls = []
     for f in files:
         if f.filename:
-            dest = os.path.join(UPLOAD_DIR, f"{case_id}_re_{f.filename}")
+            ext  = os.path.splitext(f.filename)[1].lower()
+            dest = os.path.join(UPLOAD_DIR, f"{case_id}_{uuid.uuid4().hex[:6]}{ext}")
             with open(dest, "wb") as fp:
                 fp.write(await f.read())
-            media_paths.append(dest)
+            image_urls.append("/" + dest)
 
     from graph.pipeline import resume
-    result = resume(case_id=case_id, extra_data=extra_data, media_paths=media_paths)
+    result = resume(case_id=case_id, extra_data=extra_data)
+
+    # 기존 이미지 목록에 합산
+    prev_images = result.get("image_urls") or []
+    result["image_urls"] = prev_images + image_urls
     _save_case(case_id, "", result)
     return {"case_id": case_id, **result}
 

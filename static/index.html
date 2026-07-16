@@ -213,6 +213,77 @@
   }
   .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 
+  /* 단계 진행 표시 */
+  .stepper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 80px;
+    position: relative;
+  }
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #e5e7eb;
+    z-index: 0;
+  }
+  .step.done:not(:last-child)::after  { background: #2563eb; }
+  .step.active:not(:last-child)::after { background: #e5e7eb; }
+  .step-circle {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+    position: relative; z-index: 1;
+    background: #e5e7eb; color: #9ca3af;
+    border: 2px solid #e5e7eb;
+  }
+  .step.done  .step-circle { background: #2563eb; color: white; border-color: #2563eb; }
+  .step.active .step-circle { background: white; color: #2563eb; border-color: #2563eb; }
+  .step.wait  .step-circle { background: #fef9c3; color: #92400e; border-color: #fcd34d; }
+  .step-label {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    text-align: center;
+    color: #9ca3af;
+    line-height: 1.3;
+  }
+  .step.done  .step-label { color: #2563eb; font-weight: 600; }
+  .step.active .step-label { color: #1a1a2e; font-weight: 600; }
+  .step.wait  .step-label { color: #92400e; font-weight: 600; }
+  .step.panel-open .step-circle { box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
+
+  .step-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 8px;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+  .panel-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #2563eb;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+  }
+
   @media (max-width: 768px) {
     .result-grid { grid-template-columns: 1fr; }
     .sidebar { width: 100%; height: auto; }
@@ -311,18 +382,19 @@ function showNewForm() {
         </div>
       </div>
       <div class="form-group">
-        <label>YouTube 블랙박스 URL (선택)</label>
-        <input type="text" id="youtubeUrl" placeholder="https://youtube.com/...">
+        <label>블랙박스 영상 URL (선택)</label>
+        <input type="text" id="videoUrl" placeholder="https://...">
+        <div style="font-size:0.8rem;color:#999;margin-top:4px">영상 판독은 담당자가 직접 수행합니다</div>
       </div>
       <div class="form-group">
-        <label>이미지/영상 파일 (선택)</label>
-        <input type="file" id="mediaFiles" multiple accept="image/*,video/*"
-               style="padding:8px;border:1px solid #d1d5db;border-radius:8px;width:100%">
+        <label>현장 사진 (선택)</label>
+        <input type="file" id="mediaFiles" multiple accept="image/*"
+               style="padding:8px;border:1px solid #d1d5db;border-radius:8px;width:100%;font-size:0.9rem">
       </div>
       <div class="form-group">
         <label>추가 자료 설명 (선택)</label>
         <textarea id="extraData" rows="2"
-          placeholder="제출한 자료에 대한 설명을 입력하세요"></textarea>
+          placeholder="영상 내용 또는 기타 참고사항을 입력하세요"></textarea>
       </div>
       <button class="btn-submit" onclick="submitCase()">⚖️ AI 분석 시작</button>
     </div>
@@ -341,15 +413,19 @@ async function submitCase() {
   showLoading('AI 분석 중... (10~30초 소요)');
 
   const fd = new FormData();
-  fd.append('user_input',  fullInput);
-  fd.append('youtube_url', document.getElementById('youtubeUrl').value);
-  fd.append('extra_data',  document.getElementById('extraData').value);
-
-  const files = document.getElementById('mediaFiles').files;
-  for (const f of files) fd.append('files', f);
+  fd.append('user_input', fullInput);
+  fd.append('video_url',  document.getElementById('videoUrl').value);
+  fd.append('extra_data', document.getElementById('extraData').value);
+  for (const f of document.getElementById('mediaFiles').files) fd.append('files', f);
 
   try {
-    const res    = await fetch(`${API}/api/cases`, { method: 'POST', body: fd });
+    const res = await fetch(`${API}/api/cases`, { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      hideLoading();
+      alert('오류: ' + (err.detail || res.statusText));
+      return;
+    }
     const result = await res.json();
     hideLoading();
     await loadCases();
@@ -373,18 +449,22 @@ async function loadCase(caseId) {
 // ── 추가자료 제출 ───────────────────────────────────
 async function submitExtra(caseId) {
   const extra = document.getElementById('extraInput').value.trim();
-  if (!extra) { alert('추가 자료 내용을 입력하세요.'); return; }
+  if (!extra) { alert('추가 자료 내용을 입력해야 다음 단계로 진행할 수 있습니다.'); return; }
 
   showLoading('추가 자료 분석 중...');
 
   const fd = new FormData();
   fd.append('extra_data', extra);
-
-  const files = document.getElementById('extraFiles').files;
-  for (const f of files) fd.append('files', f);
+  for (const f of document.getElementById('extraFiles').files) fd.append('files', f);
 
   try {
-    const res    = await fetch(`${API}/api/cases/${caseId}/resume`, { method: 'POST', body: fd });
+    const res = await fetch(`${API}/api/cases/${caseId}/resume`, { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      hideLoading();
+      alert('오류: ' + (err.detail || res.statusText));
+      return;
+    }
     const result = await res.json();
     hideLoading();
     await loadCases();
@@ -408,216 +488,208 @@ function renderResult(r) {
   const verdicts  = r.verdict_hits || [];
   const isWait    = r.final_status === '추가자료 대기 중';
   const isDone    = r.final_status === '완료';
-
   const liabilityClass = (liability.liability === '면책(미지급)') ? 'myunchek' : 'buchek';
+
+  // 단계 상태
+  const STEPS = [
+    { id: 0, label: '접수',        state: 'done' },
+    { id: 1, label: '자료수집',    state: isDone || isWait ? 'done' : 'active' },
+    { id: 2, label: '사실확정',    state: isDone ? 'done' : isWait ? 'wait' : 'active' },
+    { id: 3, label: '면부책 판단', state: isDone ? 'active' : '' },
+  ];
+
+  // 현재 활성 단계 계산
+  const activeStep = isDone ? 3 : isWait ? 1 : 1;
+
+  const stepperHTML = '<div class="stepper">' + STEPS.map((s, i) =>
+    `<div class="step ${s.state}" onclick="showPanel(${i})" style="cursor:pointer" title="${s.label} 상세 보기">
+      <div class="step-circle">${s.state === 'done' ? '✓' : i + 1}</div>
+      <div class="step-label">${s.label}</div>
+    </div>`
+  ).join('') + '</div>';
+
+  // 각 단계별 패널 내용
+  const panel0 = `
+    <div class="panel-title">1단계 — 접수</div>
+    <div class="fact-box">${r.user_input || norm.text_summary || ''}</div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      ${norm.dispatch_yn === 'O'
+        ? '<span class="badge" style="background:#dbeafe;color:#1e40af">🚨 현장출동 요청</span>'
+        : '<span class="badge" style="background:#f3f4f6;color:#6b7280">현장출동 없음</span>'}
+      ${norm.accident_type ? `<span class="tag">${norm.accident_type}</span>` : ''}
+    </div>
+    ${norm.video_url ? `
+    <div style="margin-top:12px;padding:12px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;font-size:0.88rem">
+      🎥 <strong>영상 자료</strong> — 담당자 직접 판독<br>
+      <a href="${norm.video_url}" target="_blank" style="color:#2563eb;word-break:break-all">${norm.video_url}</a>
+    </div>` : ''}
+    ${(r.image_urls||[]).length ? `
+    <div style="margin-top:12px">
+      <div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:8px">📷 제출 사진</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${(r.image_urls||[]).map(url => `
+          <img src="${url}" onclick="openImage('${url}')"
+            style="width:120px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;cursor:zoom-in">`
+        ).join('')}
+      </div>
+    </div>` : ''}`;
+
+  const panel1 = (() => {
+    const items = extra_req ? (extra_req.request_items || []) : [];
+    const isFirst = norm.dispatch_yn === 'X' && (r.retry_count || 0) <= 1;
+    const history = r.extra_history || [];
+    const historyHTML = history.length ? `
+      <div style="margin-top:16px;border-top:1px solid #e5e7eb;padding-top:14px">
+        <div style="font-size:0.85rem;color:#555;font-weight:600;margin-bottom:8px">📬 제출된 자료 히스토리</div>
+        ${history.map((h, i) => `
+          <div style="padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;font-size:0.88rem">
+            <div style="color:#999;font-size:0.78rem;margin-bottom:4px">${i+1}차 제출 · ${h.timestamp}</div>
+            <div style="color:#1a1a2e;line-height:1.6">${h.extra_data}</div>
+          </div>`).join('')}
+      </div>` : '';
+    return `
+    <div class="panel-title">2단계 — 자료수집</div>
+    ${items.length ? `
+      <div style="margin-bottom:12px">
+        <div style="font-size:0.85rem;color:#555;margin-bottom:6px;font-weight:600">
+          ${isFirst ? '📋 1차 요청 항목' : '📨 추가 요청 항목'}
+        </div>
+        <ol style="margin:0 0 0 18px;line-height:2.2;font-size:0.9rem">
+          ${items.map(it => `<li><strong>${it.item}</strong> <span style="color:#666;font-size:0.83rem">— ${it.reason}</span></li>`).join('')}
+        </ol>
+      </div>
+      <div class="fact-box" style="background:#fffbeb;border-color:#fcd34d;font-size:0.88rem;line-height:1.7">
+        ${extra_req.request_msg || ''}
+      </div>` : `<div style="color:#666;font-size:0.9rem">자료수집 내역 없음</div>`}
+    ${historyHTML}
+    ${isWait ? `
+    <div style="margin-top:16px;border-top:1px solid #e5e7eb;padding-top:16px">
+      <div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;color:#1a1a2e">📤 판독 결과 / 추가 확인 사항 입력</div>
+      <textarea id="extraInput" rows="3" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:8px;font-size:0.9rem"
+        placeholder="예) 영상 확인 결과 좌회전 차량이 노란불에 진입함"></textarea>
+      <input type="file" id="extraFiles" multiple accept="image/*"
+        style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:8px;font-size:0.88rem">
+      <button class="btn-submit" onclick="submitExtra('${r.case_id}')">📤 자료 제출</button>
+    </div>` : ''}`;
+  })();
+
+  const panel2 = `
+    <div class="panel-title">3단계 — 사실확정</div>
+    <div style="margin-bottom:10px">
+      <span style="font-size:0.8rem;color:#555;font-weight:600">핵심 쟁점</span>
+      <div style="margin-top:4px;font-size:0.95rem;font-weight:600;color:#1a1a2e">${fact.key_issue || '-'}</div>
+    </div>
+    ${fact.status === '충분' ? `
+      <div class="fact-box" style="border-left:3px solid #22c55e">
+        <span style="font-size:0.8rem;color:#166534;font-weight:600">✓ 사실확정 완료</span><br><br>
+        ${fact.fact_summary || ''}
+        ${fact.confidence ? `<br><br><span style="color:#666;font-size:0.83rem">신뢰도: ${fact.confidence}</span>` : ''}
+      </div>` : `
+      <div class="fact-box" style="border-left:3px solid #f59e0b">
+        <span style="font-size:0.8rem;color:#92400e;font-weight:600">⏳ 자료 보완 필요</span><br><br>
+        ${(fact.unresolved||[]).length ? `미확정: ${fact.unresolved.join(', ')}` : '추가 자료 검토 중'}
+      </div>`}
+    ${(fact.missing_info||[]).length ? `
+    <div style="margin-top:12px">
+      <div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">필요 자료 (우선순위순)</div>
+      ${fact.missing_info.map(m => `
+        <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:0.86rem">
+          <span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;font-size:0.75rem;white-space:nowrap">D:${m.decisiveness}</span>
+          <div><strong>${m.item}</strong><br><span style="color:#666">${m.reason}</span></div>
+        </div>`).join('')}
+    </div>` : ''}`;
+
+  const panel3 = (() => {
+    if (!isDone || !liability.liability) {
+      return '<div class="panel-title">4단계 — 면부책 판단</div>'
+           + '<div style="color:#9ca3af;font-size:0.9rem;padding:20px 0;text-align:center">사실확정 완료 후 진행됩니다</div>';
+    }
+    const coverageRows = Object.entries(coverage).map(([k,v]) =>
+      '<tr><td>' + k + '</td><td class="' + (v==='면책'?'myunchek-cell':'buchek-cell') + '">' + v + '</td></tr>'
+    ).join('');
+    const surchargeRows = (surcharge && Object.values(surcharge).some(v=>v>0))
+      ? '<div style="margin-top:14px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">사고부담금</div>'
+        + '<table class="surcharge-table"><tr><th>담보</th><th>금액</th></tr>'
+        + '<tr><td>대인배상 I</td><td>' + (surcharge['대인I']?surcharge['대인I']+'만원':'-') + '</td></tr>'
+        + '<tr><td>대인배상 II</td><td>' + (surcharge['대인II']?surcharge['대인II']+'만원':'-') + '</td></tr>'
+        + '<tr><td>대물배상</td><td>' + (surcharge['대물']?surcharge['대물']+'만원':'-') + '</td></tr>'
+        + '</table></div>' : '';
+    const triggerTags  = triggers.map(t => '<span class="tag red">' + t + '</span>').join('');
+    const clauseTags   = (liability['약관근거']||[]).map(a => '<span class="tag">' + a + '</span>').join('');
+    const verdictTags  = (liability['판례근거']||[]).map(v => '<span class="tag green">' + v + '</span>').join('');
+    const modifiers    = (liability['수정요소적용']||[]).map(m => '<div style="font-size:0.85rem;color:#444;padding:3px 0">• ' + m + '</div>').join('');
+    const clauseDetails = clauses.slice(0,3).map(c =>
+      '<details style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:6px">'
+      + '<summary style="cursor:pointer;font-weight:600;font-size:0.88rem">' + c.article + ' ' + c.title + ' [' + c.page + 'p]</summary>'
+      + '<p style="margin-top:8px;font-size:0.84rem;line-height:1.6;color:#444">' + c.text.substring(0,400) + '...</p>'
+      + '</details>'
+    ).join('');
+    const verdictDetails = verdicts.slice(0,3).map(v =>
+      '<details style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:6px">'
+      + '<summary style="cursor:pointer;font-weight:600;font-size:0.88rem">' + v.case_num + ' ' + v.court + (v.date?' ('+v.date+')':'') + '</summary>'
+      + '<p style="margin-top:8px;font-size:0.84rem;line-height:1.6;color:#444"><strong>판시:</strong> ' + v.issue.substring(0,200) + '<br><strong>요지:</strong> ' + v.summary.substring(0,300) + '</p>'
+      + '</details>'
+    ).join('');
+
+    return '<div class="panel-title">4단계 — 면부책 판단</div>'
+      + '<div class="liability-card ' + liabilityClass + '" style="margin-bottom:16px">'
+      + '<div class="liability-value">' + liability.liability + '</div>'
+      + '<div class="liability-branch">' + (liability['분기']||'') + '</div>'
+      + (liability['과실비율'] ? '<div style="margin-top:6px;font-size:0.85rem;opacity:0.8">과실비율: ' + liability['과실비율'] + '</div>' : '')
+      + '</div>'
+      + '<div class="result-grid"><div>'
+      + (coverageRows ? '<div style="margin-bottom:14px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">담보별 판단</div><table class="coverage-table"><tr><th>담보</th><th>판단</th></tr>' + coverageRows + '</table></div>' : '')
+      + surchargeRows
+      + '</div><div>'
+      + (triggerTags ? '<div style="margin-bottom:12px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">감지된 면책 트리거</div><div class="tag-list">' + triggerTags + '</div></div>' : '')
+      + (clauseTags  ? '<div style="margin-bottom:12px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">약관 근거</div><div class="tag-list">' + clauseTags + '</div></div>' : '')
+      + (verdictTags ? '<div style="margin-bottom:12px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">판례 근거</div><div class="tag-list">' + verdictTags + '</div></div>' : '')
+      + (modifiers   ? '<div><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">적용된 수정요소</div>' + modifiers + '</div>' : '')
+      + '</div></div>'
+      + (clauseDetails  ? '<div style="margin-top:16px;border-top:1px solid #e5e7eb;padding-top:14px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:8px">검색된 약관 조항</div>' + clauseDetails + '</div>' : '')
+      + (verdictDetails ? '<div style="margin-top:12px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:8px">검색된 판결문</div>' + verdictDetails + '</div>' : '');
+  })();
+
+  const PANELS = [panel0, panel1, panel2, panel3];
 
   document.getElementById('mainArea').innerHTML = `
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <h2>📁 ${r.case_id || ''}</h2>
         <div style="display:flex;gap:8px;align-items:center">
           ${statusBadge(r.final_status)}
           <button onclick="deleteCase('${r.case_id}')"
-            style="background:#fee2e2;color:#b91c1c;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.82rem">
-            삭제
-          </button>
+            style="background:#fee2e2;color:#b91c1c;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.82rem">삭제</button>
         </div>
       </div>
-
-      <!-- 접수 내용 -->
-      <div class="result-section">
-        <h3>접수 내용</h3>
-        <div class="fact-box">${r.user_input || norm.text_summary || ''}</div>
-        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-          ${norm.dispatch_yn === 'O'
-            ? '<span class="badge" style="background:#dbeafe;color:#1e40af">🚨 현장출동 요청</span>'
-            : '<span class="badge" style="background:#f3f4f6;color:#6b7280">현장출동 없음</span>'}
-          <span style="font-size:0.82rem;color:#999">${norm.accident_type || ''}</span>
-        </div>
-      </div>
-
-      <!-- 미디어 분석 결과 -->
-      ${norm.media_summary && norm.media_summary !== '제출 자료 없음' ? `
-      <div class="result-section">
-        <h3>제출 자료 분석</h3>
-        <div class="fact-box" style="border-left:3px solid #3b82f6">
-          <span style="font-size:0.8rem;color:#2563eb;font-weight:600">🎥 Vision AI 분석 완료</span><br><br>
-          ${norm.media_summary}
-        </div>
-        ${(r.keyframe_urls||[]).length ? `
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-          ${(r.keyframe_urls||[]).map((url, i) => `
-            <div style="position:relative">
-              <img src="${url}" style="width:160px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;cursor:pointer"
-                   onclick="openFrame('${url}')" title="프레임 ${i+1} 클릭하여 확대">
-              <span style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.6);color:white;font-size:0.7rem;padding:1px 5px;border-radius:3px">
-                프레임 ${i+1}
-              </span>
-            </div>
-          `).join('')}
-        </div>` : ''}
-      </div>` : ''}
-
-      <!-- P1 결과 -->
-      ${fact.fact_summary ? `
-      <div class="result-section">
-        <h3>확정된 사실관계</h3>
-        <div class="fact-box">
-          <strong>쟁점:</strong> ${fact.key_issue || ''}<br><br>
-          ${fact.fact_summary}
-          ${fact.confidence ? `<br><br><span style="color:#666;font-size:0.85rem">신뢰도: ${fact.confidence}</span>` : ''}
-          ${fact.contradiction ? `<br><span style="color:#b91c1c;font-size:0.85rem">⚠️ ${fact.contradiction}</span>` : ''}
-        </div>
-      </div>` : fact.key_issue ? `
-      <div class="result-section">
-        <h3>사실관계 분석</h3>
-        <div class="fact-box">
-          <strong>쟁점:</strong> ${fact.key_issue || ''}<br><br>
-          <span style="color:#b45309">아직 사실관계 확정에 필요한 자료가 부족합니다.</span>
-          ${(fact.unresolved||[]).length ? `<br><br><span style="font-size:0.85rem;color:#666">미확정: ${fact.unresolved.join(', ')}</span>` : ''}
-        </div>
-      </div>` : ''}
-
-      <!-- 자료수집 요청 (자료 대기 중) -->
-      ${isWait && extra_req ? (() => {
-        const isFirst = norm.dispatch_yn === 'X' && (r.retry_count || 0) <= 1;
-        const label   = isFirst ? '📋 1차 자료수집 요청' : '📨 추가 자료 요청';
-        const items   = extra_req.request_items || [];
-        return `
-        <div class="result-section">
-          <div class="request-box" style="${isFirst ? 'background:#eff6ff;border-color:#93c5fd' : ''}">
-            <h3 style="${isFirst ? 'color:#1e40af' : ''}">${label}</h3>
-            ${items.length ? `
-            <ol style="margin:10px 0 10px 18px;line-height:2">
-              ${items.map(it => `
-                <li>
-                  <strong>${it.item}</strong>
-                  <span style="color:#666;font-size:0.85rem"> — ${it.reason}</span>
-                </li>
-              `).join('')}
-            </ol>` : ''}
-            <p style="margin-top:6px">${extra_req.request_msg || ''}</p>
-          </div>
-          <div style="margin-top:14px">
-            <textarea id="extraInput" rows="3" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:8px"
-              placeholder="제출 자료에 대한 설명을 입력하세요"></textarea>
-            <input type="file" id="extraFiles" multiple accept="image/*,video/*"
-              style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:8px">
-            <button class="btn-submit" onclick="submitExtra('${r.case_id}')">📤 자료 제출</button>
-          </div>
-        </div>`;
-      })() : ''}
-
-      <!-- P2 결과 (완료 시) -->
-      ${isDone && liability.liability ? `
-      <div class="result-grid">
-        <!-- 면부책 판단 -->
-        <div>
-          <div class="result-section">
-            <h3>면부책 판단</h3>
-            <div class="liability-card ${liabilityClass}">
-              <div class="liability-value">${liability.liability || ''}</div>
-              <div class="liability-branch">${liability['분기'] || ''}</div>
-            </div>
-          </div>
-
-          ${Object.keys(coverage).length ? `
-          <div class="result-section">
-            <h3>담보별 판단</h3>
-            <table class="coverage-table">
-              <tr><th>담보</th><th>판단</th></tr>
-              ${Object.entries(coverage).map(([k,v]) => `
-                <tr><td>${k}</td>
-                    <td class="${v === '면책' ? 'myunchek-cell' : 'buchek-cell'}">${v}</td></tr>
-              `).join('')}
-            </table>
-          </div>` : ''}
-
-          ${surcharge && Object.values(surcharge).some(v=>v>0) ? `
-          <div class="result-section">
-            <h3>사고부담금 (제11조)</h3>
-            <table class="surcharge-table">
-              <tr><th>담보</th><th>금액</th></tr>
-              <tr><td>대인배상 I</td><td>${surcharge['대인I'] ? surcharge['대인I']+'만원' : '-'}</td></tr>
-              <tr><td>대인배상 II</td><td>${surcharge['대인II'] ? surcharge['대인II']+'만원' : '-'}</td></tr>
-              <tr><td>대물배상</td><td>${surcharge['대물'] ? surcharge['대물']+'만원' : '-'}</td></tr>
-            </table>
-          </div>` : ''}
-        </div>
-
-        <!-- 근거 -->
-        <div>
-          ${triggers.length ? `
-          <div class="result-section">
-            <h3>감지된 트리거</h3>
-            <div class="tag-list">
-              ${triggers.map(t => `<span class="tag red">${t}</span>`).join('')}
-            </div>
-          </div>` : ''}
-
-          ${(liability['약관근거']||[]).length ? `
-          <div class="result-section">
-            <h3>약관 근거</h3>
-            <div class="tag-list">
-              ${(liability['약관근거']||[]).map(a => `<span class="tag">${a}</span>`).join('')}
-            </div>
-          </div>` : ''}
-
-          ${(liability['판례근거']||[]).length ? `
-          <div class="result-section">
-            <h3>판례 근거</h3>
-            <div class="tag-list">
-              ${(liability['판례근거']||[]).map(v => `<span class="tag green">${v}</span>`).join('')}
-            </div>
-          </div>` : ''}
-
-          ${liability['근거요약'] ? `
-          <div class="result-section">
-            <h3>판단 근거 요약</h3>
-            <div class="fact-box">${liability['근거요약']}</div>
-          </div>` : ''}
-        </div>
-      </div>
-
-      <!-- 검색된 약관 조항 -->
-      ${clauses.length ? `
-      <div class="result-section">
-        <h3>검색된 약관 조항</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${clauses.slice(0,3).map(c => `
-            <details style="border:1px solid #e5e7eb;border-radius:8px;padding:10px">
-              <summary style="cursor:pointer;font-weight:600;font-size:0.9rem">
-                ${c.article} ${c.title} [${c.page}페이지]
-              </summary>
-              <p style="margin-top:8px;font-size:0.85rem;line-height:1.6;color:#444">
-                ${c.text.substring(0,400)}...
-              </p>
-            </details>
-          `).join('')}
-        </div>
-      </div>` : ''}
-
-      <!-- 검색된 판결문 -->
-      ${verdicts.length ? `
-      <div class="result-section">
-        <h3>검색된 판결문</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${verdicts.slice(0,3).map(v => `
-            <details style="border:1px solid #e5e7eb;border-radius:8px;padding:10px">
-              <summary style="cursor:pointer;font-weight:600;font-size:0.9rem">
-                ${v.case_num} ${v.court} ${v.date ? '('+v.date+')' : ''}
-              </summary>
-              <p style="margin-top:8px;font-size:0.85rem;line-height:1.6;color:#444">
-                <strong>판시:</strong> ${v.issue.substring(0,200)}<br>
-                <strong>요지:</strong> ${v.summary.substring(0,300)}
-              </p>
-            </details>
-          `).join('')}
-        </div>
-      </div>` : ''}
-      ` : ''}
+      ${stepperHTML}
+      <div id="stepPanels" style="margin-top:4px"></div>
     </div>
   `;
+
+  // 패널 표시 함수 (전역 등록)
+  window._panels = PANELS;
+  window.showPanel = function(idx) {
+    const el = document.getElementById('stepPanels');
+    if (!el) return;
+    // 이미 같은 패널이면 닫기
+    if (el.dataset.open === String(idx)) {
+      el.innerHTML = '';
+      el.dataset.open = '';
+      document.querySelectorAll('.step').forEach((s,i) => {
+        if (i === idx) s.classList.remove('panel-open');
+      });
+      return;
+    }
+    el.dataset.open = String(idx);
+    el.innerHTML = `<div class="step-panel">${window._panels[idx]}</div>`;
+    document.querySelectorAll('.step').forEach((s,i) => {
+      s.classList.toggle('panel-open', i === idx);
+    });
+  };
+
+  // 현재 활성 단계 자동 열기
+  window.showPanel(activeStep);
 }
 
 // ── 삭제 ────────────────────────────────────────────
@@ -642,11 +714,11 @@ function hideLoading() {
   document.getElementById('loading').classList.remove('show');
 }
 
-// ── 프레임 확대 ─────────────────────────────────────
-function openFrame(url) {
+// ── 이미지 확대 ─────────────────────────────────────
+function openImage(url) {
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
-  modal.innerHTML = `<img src="${url}" style="max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.5)">`;
+  modal.innerHTML = `<img src="${url}" style="max-width:90vw;max-height:90vh;border-radius:8px">`;
   modal.onclick = () => modal.remove();
   document.body.appendChild(modal);
 }
