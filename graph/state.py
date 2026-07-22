@@ -43,3 +43,5 @@ class PipelineState(TypedDict):
     # ── 파이프라인 제어 ──────────────────────────────
     final_status:  str         # 사실관계 확정 / 추가자료 대기 / 완료
     error:         str         # 오류 메시지
+    reviewed:      bool        # 면책 검토 완료 여부
+

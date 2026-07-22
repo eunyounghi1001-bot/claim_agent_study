@@ -3,419 +3,1861 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사고보상 Agent</title>
+<title>현대해상 · Claim Agent 통합 대시보드</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans KR', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+/* ── 현대해상 브랜드 토큰 ──
+   HI Navy #00205b · HI Orange #ff9e1b · White 배경 (CI 가이드 준수) */
+:root {
+  --hi-navy: #00205b;
+  --hi-navy-2: #0b2c66;
+  --hi-navy-ink: #0b2350;
+  --hi-orange: #ff9e1b;
+  --hi-orange-d: #d97e00;
+  --hi-orange-soft: #fff4e0;
+  --hi-orange-b: #ffd693;
+  --hi-blue: #418fde;
+  --hi-navy-tint: #eaeff7;
+  --hi-navy-line: #d6ddec;
+  --hi-navy-b: #c6d1e5;
+  --hi-page: #eef2f7;
+  --hi-card: #ffffff;
+  --hi-soft: #5c6b85;
+  --hi-muted: #8793a8;
+  --hi-line: #e5e9f1;
+}
 
-  header {
-    background: #1a1a2e;
-    color: white;
-    padding: 16px 32px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  }
-  header h1 { font-size: 1.2rem; font-weight: 600; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  background: var(--hi-page);
+  color: var(--hi-navy-ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
 
-  .layout { display: flex; height: calc(100vh - 56px); }
+/* ── HEADER ── */
+header {
+  flex: none;
+  padding: 13px 28px;
+  background: #ffffff;
+  border-bottom: 3px solid var(--hi-orange);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 2px 10px rgba(0,32,91,0.06);
+}
 
-  /* 사이드바 */
-  .sidebar {
-    width: 280px;
-    background: white;
-    border-right: 1px solid #e0e0e0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .sidebar-header {
-    padding: 16px;
-    border-bottom: 1px solid #e0e0e0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .sidebar-header h2 { font-size: 0.9rem; color: #666; }
-  .btn-new {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 6px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85rem;
-  }
-  .btn-new:hover { background: #1d4ed8; }
+/* Figma 로고 이미지 대체용 플레이스홀더 영역 */
+.logo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hi-navy-tint);
+  border: 1.5px dashed var(--hi-navy-b);
+  border-radius: 6px;
+  padding: 4px 12px;
+  height: 38px;
+  min-width: 140px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--hi-navy);
+  font-size: 11px;
+  font-weight: 700;
+}
+.logo-placeholder:hover {
+  background: var(--hi-orange-soft);
+  border-color: var(--hi-orange);
+  color: var(--hi-orange-d);
+}
 
-  .case-list { overflow-y: auto; flex: 1; }
-  .case-item {
-    padding: 14px 16px;
-    border-bottom: 1px solid #f0f0f0;
-    cursor: pointer;
-    transition: background 0.1s;
-  }
-  .case-item:hover { background: #f8f9fa; }
-  .case-item.active { background: #eff6ff; border-left: 3px solid #2563eb; }
-  .case-item-id { font-size: 0.8rem; color: #666; }
-  .case-item-type { font-size: 0.95rem; font-weight: 500; margin: 2px 0; }
-  .case-item-date { font-size: 0.78rem; color: #999; }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 99px;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-  .badge-done    { background: #dcfce7; color: #166534; }
-  .badge-wait    { background: #fef9c3; color: #854d0e; }
-  .badge-process { background: #dbeafe; color: #1e40af; }
+.ci-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 0;
+  background: var(--hi-navy-line);
+  flex: none;
+}
+.header-left {
+  flex: 1;
+  min-width: 0;
+}
+.header-left h1 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--hi-navy);
+  letter-spacing: -0.2px;
+}
+.header-left p {
+  font-size: 12px;
+  color: var(--hi-soft);
+  margin-top: 2px;
+}
 
-  /* 메인 */
-  .main { flex: 1; overflow-y: auto; padding: 24px; }
+.badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: none;
+}
+.btn-new {
+  background: var(--hi-orange);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background 0.15s;
+}
+.btn-new:hover {
+  background: var(--hi-orange-d);
+}
 
-  /* 접수 폼 */
-  .card {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  }
-  .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }
-  .form-group { margin-bottom: 14px; }
-  label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 4px; }
-  textarea, input[type=text] {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    resize: vertical;
-    font-family: inherit;
-  }
-  textarea:focus, input[type=text]:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-  }
-  .btn-submit {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 600;
-    width: 100%;
-    margin-top: 4px;
-    transition: background 0.2s;
-  }
-  .btn-submit:hover:not(:disabled) { background: #1d4ed8; }
-  .btn-submit:disabled { background: #9ca3af; cursor: not-allowed; }
+.reset-btn {
+  padding: 6px 13px;
+  border-radius: 8px;
+  border: 1px solid var(--hi-navy-line);
+  background: #fff;
+  color: var(--hi-soft);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.reset-btn:hover {
+  background: var(--hi-navy-tint);
+  border-color: var(--hi-navy-b);
+  color: var(--hi-navy);
+}
 
-  /* 결과 */
-  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .result-section { margin-bottom: 16px; }
-  .result-section h3 { font-size: 0.85rem; color: #666; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+/* ── LAYOUT ── */
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
 
-  .fact-box {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 14px;
-    font-size: 0.9rem;
-    line-height: 1.6;
-  }
+/* ── LEFT SIDEBAR (사건 목록) ── */
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: #ffffff;
+  border-right: 1px solid var(--hi-line);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--hi-line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--hi-navy-tint);
+}
+.sidebar-header h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hi-navy);
+}
 
-  .liability-card {
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-  }
-  .liability-card.buchek { background: #dcfce7; border: 2px solid #86efac; }
-  .liability-card.myunchek { background: #fee2e2; border: 2px solid #fca5a5; }
-  .liability-value { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
-  .liability-branch { font-size: 0.85rem; color: #555; }
+.case-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 0;
+}
+.case-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--hi-line);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.case-item:hover {
+  background: #f8fafc;
+}
+.case-item.active {
+  background: var(--hi-navy-tint);
+  border-left: 4px solid var(--hi-orange);
+}
+.case-item-id {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--hi-soft);
+}
+.case-item-type {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 3px 0;
+  color: var(--hi-navy-ink);
+}
+.case-item-date {
+  font-size: 11px;
+  color: var(--hi-muted);
+  margin-top: 4px;
+}
 
-  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tag {
-    background: #eff6ff;
-    color: #1d4ed8;
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-size: 0.82rem;
-    font-weight: 500;
-  }
-  .tag.red { background: #fee2e2; color: #b91c1c; }
-  .tag.green { background: #dcfce7; color: #166534; }
+/* 상태 배지 */
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.badge-done {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+.badge-wait {
+  background: var(--hi-orange-soft);
+  color: var(--hi-orange-d);
+  border-color: var(--hi-orange-b);
+}
+.badge-review {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+.badge-process {
+  background: var(--hi-navy-tint);
+  color: var(--hi-navy);
+  border-color: var(--hi-navy-b);
+}
 
-  .surcharge-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-  .surcharge-table th, .surcharge-table td {
-    padding: 8px 12px;
-    border: 1px solid #e5e7eb;
-    text-align: center;
-  }
-  .surcharge-table th { background: #f9fafb; font-weight: 600; }
-  .surcharge-table td:first-child { text-align: left; }
+/* ── MAIN CANVAS (중앙 워크플로우 캔버스) ── */
+.canvas {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px 48px;
+  background: var(--hi-page);
+}
+.canvas-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
 
-  .coverage-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-  .coverage-table th, .coverage-table td {
-    padding: 8px 12px;
-    border: 1px solid #e5e7eb;
-    text-align: center;
-  }
-  .coverage-table th { background: #f9fafb; font-weight: 600; }
-  .coverage-table td:first-child { text-align: left; }
-  .buchek-cell { color: #166534; font-weight: 600; }
-  .myunchek-cell { color: #b91c1c; font-weight: 600; }
+/* 트리거 / 종결 박스 */
+.trigger-box {
+  background: #ffffff;
+  border: 1.5px solid var(--hi-navy-b);
+  border-radius: 12px;
+  padding: 16px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,32,91,0.04);
+}
+.trigger-box.complete {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.trigger-box.exempt {
+  background: var(--hi-orange-soft);
+  border-color: var(--hi-orange-b);
+}
+.t-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--hi-muted);
+  margin-bottom: 4px;
+}
+.t-label.green { color: #16a34a; }
+.t-label.yellow { color: var(--hi-orange-d); }
+.t-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--hi-navy-ink);
+}
+.t-sub {
+  font-size: 12px;
+  color: var(--hi-soft);
+  margin-top: 3px;
+}
 
-  .request-box {
-    background: #fffbeb;
-    border: 1px solid #fcd34d;
-    border-radius: 8px;
-    padding: 14px;
-    font-size: 0.9rem;
-    line-height: 1.6;
-  }
-  .request-box h3 { color: #92400e; margin-bottom: 8px; font-size: 0.9rem; }
+.arrow-down {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+.arrow-down svg {
+  opacity: 0.4;
+}
 
-  /* 로딩 */
-  .loading-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 16px;
-  }
-  .loading-overlay.show { display: flex; }
-  .spinner {
-    width: 48px; height: 48px;
-    border: 4px solid rgba(255,255,255,0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { color: white; font-size: 1rem; }
+/* 페이즈 헤더 */
+.phase-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  margin-top: 8px;
+}
+.phase-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--hi-navy-tint);
+  color: var(--hi-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.phase-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--hi-soft);
+}
+.phase-line {
+  flex: 1;
+  height: 1px;
+  background: var(--hi-navy-line);
+}
 
-  .empty-state {
-    text-align: center;
-    color: #999;
-    padding: 60px 0;
-    font-size: 0.95rem;
-  }
-  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+/* 에이전트 카드 배치 */
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.agent-grid.single {
+  max-width: 400px;
+  margin: 0 auto;
+}
 
-  /* 단계 진행 표시 */
-  .stepper {
-    display: flex;
-    align-items: flex-start;
-    gap: 0;
-    margin-bottom: 24px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-  .step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
-    min-width: 80px;
-    position: relative;
-  }
-  .step:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 14px;
-    left: 50%;
-    width: 100%;
-    height: 2px;
-    background: #e5e7eb;
-    z-index: 0;
-  }
-  .step.done:not(:last-child)::after  { background: #2563eb; }
-  .step.active:not(:last-child)::after { background: #e5e7eb; }
-  .step-circle {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.75rem; font-weight: 700;
-    position: relative; z-index: 1;
-    background: #e5e7eb; color: #9ca3af;
-    border: 2px solid #e5e7eb;
-  }
-  .step.done  .step-circle { background: #2563eb; color: white; border-color: #2563eb; }
-  .step.active .step-circle { background: white; color: #2563eb; border-color: #2563eb; }
-  .step.wait  .step-circle { background: #fef9c3; color: #92400e; border-color: #fcd34d; }
-  .step-label {
-    margin-top: 6px;
-    font-size: 0.72rem;
-    text-align: center;
-    color: #9ca3af;
-    line-height: 1.3;
-  }
-  .step.done  .step-label { color: #2563eb; font-weight: 600; }
-  .step.active .step-label { color: #1a1a2e; font-weight: 600; }
-  .step.wait  .step-label { color: #92400e; font-weight: 600; }
-  .step.panel-open .step-circle { box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
+.agent-card {
+  background: #ffffff;
+  border: 1.5px solid var(--hi-line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+.agent-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--hi-navy);
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.agent-card:hover {
+  border-color: var(--hi-navy);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,32,91,0.08);
+}
+.agent-card:hover::before {
+  opacity: 1;
+  background: var(--hi-orange);
+}
+.agent-card.active-flow {
+  border-color: var(--hi-orange);
+  box-shadow: 0 0 0 3px var(--hi-orange-soft);
+  animation: pulse-orange 1.8s ease infinite;
+}
+.agent-card.done-flow {
+  border-color: #86efac;
+}
+.agent-card.done-flow::before {
+  background: #16a34a;
+}
 
-  .step-panel {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin-top: 8px;
-    animation: fadeIn 0.15s ease;
-  }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-  .panel-title {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #2563eb;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 12px;
-  }
+@keyframes pulse-orange {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 158, 27, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 158, 27, 0); }
+}
 
-  @media (max-width: 768px) {
-    .result-grid { grid-template-columns: 1fr; }
-    .sidebar { width: 100%; height: auto; }
-    .layout { flex-direction: column; }
-  }
+/* Figma 이미지 삽입용 플레이스홀더 */
+.figma-img-placeholder {
+  width: 32px;
+  height: 32px;
+  background: var(--hi-navy-tint);
+  border: 1px dashed var(--hi-navy-b);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--hi-soft);
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-align: center;
+  font-weight: bold;
+}
+
+.card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--hi-navy-ink);
+  margin-bottom: 2px;
+}
+.card-category {
+  font-size: 11px;
+  color: var(--hi-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.card-desc {
+  font-size: 12px;
+  color: var(--hi-soft);
+  line-height: 1.5;
+}
+
+/* 특수 상호작용 디자인 (RAG 브릿지) */
+.interact-wrapper {
+  background: var(--hi-navy-tint);
+  border: 1.5px solid var(--hi-navy-b);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.interact-card-area {
+  flex: 1.2;
+}
+.interact-bridge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.interact-bridge-label {
+  font-size: 10px;
+  color: var(--hi-soft);
+  background: #ffffff;
+  border: 1px solid var(--hi-navy-line);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.interact-infra-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.infra-mini-card {
+  background: #ffffff;
+  border: 1px dashed var(--hi-navy-b);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.infra-mini-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--hi-navy-tint);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.infra-mini-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--hi-navy);
+}
+
+/* 부책/면책 분기 랩퍼 */
+.branch-wrapper {
+  border: 1.5px solid var(--hi-navy-line);
+  border-radius: 12px;
+  background: var(--hi-navy-tint);
+  padding: 14px;
+  margin: 12px 0;
+}
+.branch-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.branch-title {
+  background: var(--hi-navy);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+.branch-desc {
+  font-size: 12px;
+  color: var(--hi-soft);
+}
+
+/* ── RIGHT DETAIL PANEL (협업 및 상세 정보) ── */
+.detail-panel {
+  width: 360px;
+  min-width: 360px;
+  background: #ffffff;
+  border-left: 1px solid var(--hi-line);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.detail-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--hi-line);
+  background: var(--hi-navy-tint);
+}
+.detail-header-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--hi-navy-ink);
+}
+.detail-header-sub {
+  font-size: 11px;
+  color: var(--hi-soft);
+  margin-top: 2px;
+}
+
+.detail-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px;
+}
+
+/* 카카오톡 대화형 피드백창 */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #b2c7d9; /* 카카오톡 라이트블루 백그라운드 */
+  border-radius: 12px;
+  padding: 14px;
+  min-height: 250px;
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+}
+.bubble {
+  max-width: 85%;
+  padding: 9px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 12px;
+  position: relative;
+  word-break: break-all;
+}
+.bubble-agent {
+  align-self: flex-start;
+  background: #ffffff;
+  color: var(--hi-navy-ink);
+  border-top-left-radius: 2px;
+}
+.bubble-agent::before {
+  content: '🤖 Claim Agent';
+  display: block;
+  font-weight: 700;
+  color: var(--hi-navy);
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+.bubble-user {
+  align-self: flex-end;
+  background: #fee500;
+  color: #191600;
+  border-top-right-radius: 2px;
+}
+.bubble-system {
+  align-self: center;
+  background: rgba(0,0,0,0.15);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  text-align: center;
+  max-width: 95%;
+}
+
+.detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--hi-muted);
+  text-align: center;
+  padding: 30px 16px;
+}
+.detail-empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+/* 폼 스타일 */
+.form-card {
+  background: #ffffff;
+  border: 1px solid var(--hi-line);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--hi-soft);
+  margin-bottom: 4px;
+}
+textarea, input[type=text] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--hi-navy-line);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  background: #ffffff;
+  color: var(--hi-navy-ink);
+}
+textarea:focus, input[type=text]:focus {
+  outline: none;
+  border-color: var(--hi-navy);
+  box-shadow: 0 0 0 3px var(--hi-navy-tint);
+}
+.btn-submit {
+  background: var(--hi-navy);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  width: 100%;
+  transition: background 0.15s;
+}
+.btn-submit:hover {
+  background: var(--hi-navy-2);
+}
+
+/* 테이블 스타일 */
+.mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin-top: 8px;
+}
+.mini-table th, .mini-table td {
+  padding: 6px 8px;
+  border: 1px solid var(--hi-line);
+  text-align: center;
+}
+.mini-table th {
+  background: var(--hi-navy-tint);
+  font-weight: 700;
+  color: var(--hi-navy);
+}
+.mini-table td:first-child {
+  text-align: left;
+}
+
+/* RAG 검증기 결과 뷰어용 스타일 */
+.rag-result-card {
+  background: #ffffff;
+  border: 1px solid var(--hi-navy-line);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.rag-result-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--hi-navy);
+  border-bottom: 1.5px solid var(--hi-orange);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+.rag-result-score {
+  color: var(--hi-orange-d);
+}
+.rag-result-body {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--hi-navy-ink);
+}
+
+/* 시뮬레이터 전용 CSS */
+.sim-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sim-section-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--hi-navy);
+  margin-top: 14px;
+  margin-bottom: 6px;
+  border-left: 3px solid var(--hi-orange);
+  padding-left: 6px;
+}
+.active-tab {
+  background: var(--hi-navy-tint) !important;
+  color: var(--hi-navy) !important;
+  border: 1.5px solid var(--hi-navy-b) !important;
+}
+
+/* 로딩 */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(11,35,80,0.6);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  backdrop-filter: blur(2px);
+}
+.loading-overlay.show { display: flex; }
+.spinner {
+  width: 48px; height: 48px;
+  border: 4px solid rgba(255,255,255,0.3);
+  border-top-color: var(--hi-orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: white; font-size: 14px; font-weight: 700; }
+
+@media (max-width: 1024px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: 200px; min-height: 200px; }
+  .detail-panel { width: 100%; border-left: none; border-top: 1px solid var(--hi-line); }
+}
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
-  <span style="font-size:1.4rem">🚗</span>
-  <h1>사고보상 Agent</h1>
+  <!-- Figma 로고 이미지 대체용 플레이스홀더 영역 -->
+  <div class="logo-placeholder" id="figmaLogoPlaceholder" onclick="showNewForm()">
+    🎨 FIGMA LOGO (현대해상)
+  </div>
+  <div class="ci-divider"></div>
+  <div class="header-left">
+    <h1>현대해상 · Claim Agent</h1>
+    <p>사고보상 지능형 멀티 에이전트 시스템</p>
+  </div>
+  <div class="badges">
+    <button class="reset-btn" style="background:var(--hi-navy-tint); color:var(--hi-navy); border-color:var(--hi-navy-b); font-weight:800; font-size:12px; padding:6px 14px" onclick="showRagTester()">🔎 RAG 검증기</button>
+    <button class="reset-btn" onclick="resetView()">↺ 초기화</button>
+    <button class="btn-new" onclick="showNewForm()">+ 새 사고 접수</button>
+  </div>
 </header>
 
 <div class="layout">
-  <!-- 사이드바 -->
+  <!-- LEFT SIDEBAR: 사건 목록 -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h2>사건 목록</h2>
-      <button class="btn-new" onclick="showNewForm()">+ 새 접수</button>
+      <h2>접수 사건 목록</h2>
     </div>
     <div class="case-list" id="caseList">
-      <div class="empty-state" style="padding:30px 0">
-        <div>접수된 사건이 없습니다</div>
+      <div class="detail-empty" style="padding: 30px 0">
+        <div class="detail-empty-icon">📁</div>
+        <div>접수된 사건이 없습니다.</div>
       </div>
     </div>
   </aside>
 
-  <!-- 메인 -->
-  <main class="main" id="mainArea">
-    <div class="empty-state">
-      <div class="icon">🚗</div>
-      <div>새 사건을 접수하거나 목록에서 사건을 선택하세요</div>
-    </div>
+  <!-- MAIN CANVAS: 에이전트 협업 절차 또는 RAG 테스터가 렌더링되는 곳 -->
+  <main class="canvas" id="mainArea">
+    <!-- showNewForm()에 의해 입력 폼이 렌더링되거나 renderWorkflowCanvas()에 의해 다이어그램이 들어옵니다. -->
   </main>
+
+  <!-- RIGHT DETAIL PANEL: 상세 리포트 및 협업 피드백 -->
+  <aside class="detail-panel">
+    <div class="detail-header" style="padding-bottom: 0;">
+      <div class="detail-header-title" id="detailTitle">협업 대시보드</div>
+      <div class="detail-header-sub" id="detailSubTitle">사건을 선택하거나 에이전트를 클릭하세요.</div>
+      <div id="detailTabs" style="display: none; gap: 4px; margin-top: 12px;">
+        <button class="reset-btn active-tab" id="tabReportBtn" onclick="switchDetailTab('report')" style="flex:1; border-bottom: none; border-radius: 6px 6px 0 0; padding: 6px 12px; font-weight:800; font-size:12px; background:var(--hi-navy-tint); color:var(--hi-navy); border: 1.5px solid var(--hi-navy-b);">📄 종합 보고서</button>
+        <button class="reset-btn" id="tabAgentBtn" onclick="switchDetailTab('agent')" style="flex:1; border-bottom: none; border-radius: 6px 6px 0 0; padding: 6px 12px; font-weight:800; font-size:12px; background:#fff; color:var(--hi-soft); border: 1px solid var(--hi-navy-line);">💬 에이전트 상세</button>
+      </div>
+    </div>
+    <div class="detail-content" id="detailContent">
+      <div class="detail-empty">
+        <div class="detail-empty-icon">☝️</div>
+        <div>좌측 목록에서 사건을 선택하거나,<br>중앙 워크플로우 캔버스의 에이전트를 클릭하여 상세 분석 결과를 조회하십시오.</div>
+      </div>
+    </div>
+  </aside>
 </div>
 
-<!-- 로딩 오버레이 -->
+<!-- 로딩 레이어 -->
 <div class="loading-overlay" id="loading">
   <div class="spinner"></div>
-  <div class="loading-text" id="loadingText">AI 분석 중... (1~3분 소요)</div>
+  <div class="loading-text" id="loadingText">AI 분석 중... (10~30초 소요)</div>
 </div>
 
 <script>
 const API = '';
 let currentCaseId = null;
+let currentCaseData = null;
+let activeAgentId = null;
+let activeFormTab = 'simulator'; // 기본을 시뮬레이터 탭으로 세팅
+let currentDetailTab = 'report'; // 기본 상세 탭: 종합 보고서
 
-// ── 사건 목록 로드 ──────────────────────────────────
-async function loadCases() {
-  const res  = await fetch(`${API}/api/cases`);
-  const list = await res.json();
-  const el   = document.getElementById('caseList');
-
-  if (!list.length) {
-    el.innerHTML = '<div class="empty-state" style="padding:30px 0"><div>접수된 사건이 없습니다</div></div>';
-    return;
+// ── 마크다운 파서 및 HTML 테이블 렌더러 ────────────────
+function parseMarkdown(md) {
+  if (!md) return '<div style="text-align:center;color:var(--hi-muted);padding:30px 0;">보고서 내용이 생성되지 않았습니다.</div>';
+  
+  let lines = md.split('\n');
+  let html = '';
+  let inList = false;
+  let inTable = false;
+  let tableRows = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    
+    // 테이블 감지 및 파싱
+    if (line.startsWith('|')) {
+      if (inList) { html += '</ul>'; inList = false; }
+      inTable = true;
+      let cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+      tableRows.push(cells);
+      continue;
+    } else if (inTable) {
+      html += renderHtmlTable(tableRows);
+      tableRows = [];
+      inTable = false;
+    }
+    
+    // 제목 감지 (##)
+    if (line.startsWith('## ')) {
+      if (inList) { html += '</ul>'; inList = false; }
+      let title = line.substring(3).trim();
+      html += `<h3 style="font-size:14px; font-weight:800; color:var(--hi-navy); margin-top:20px; margin-bottom:8px; border-bottom:1.5px solid var(--hi-navy-line); padding-bottom:4px; display:flex; align-items:center; gap:6px;">
+        <span style="color:var(--hi-orange);">■</span> ${title}
+      </h3>`;
+    }
+    // 리스트 감지 (- )
+    else if (line.startsWith('- ')) {
+      if (!inList) { html += '<ul style="margin-bottom:12px; padding-left:18px; list-style-type: disc;">'; inList = true; }
+      let content = line.substring(2).trim();
+      content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html += `<li style="font-size:12px; color:var(--hi-navy-ink); line-height:1.6; margin-bottom:4px;">${content}</li>`;
+    }
+    // 빈 줄 감지
+    else if (line === '') {
+      if (inList) { html += '</ul>'; inList = false; }
+    }
+    // 일반 단락
+    else {
+      if (inList) { html += '</ul>'; inList = false; }
+      let content = line;
+      content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html += `<p style="font-size:12px; color:var(--hi-navy-ink); line-height:1.6; margin-bottom:10px;">${content}</p>`;
+    }
   }
+  
+  if (inList) html += '</ul>';
+  if (inTable) html += renderHtmlTable(tableRows);
+  
+  return html;
+}
 
-  el.innerHTML = list.map(c => `
-    <div class="case-item ${c.case_id === currentCaseId ? 'active' : ''}"
-         onclick="loadCase('${c.case_id}')">
-      <div class="case-item-id">${c.case_id}</div>
-      <div class="case-item-type">${c.accident_type || '사고'}</div>
-      <div style="margin:4px 0">${statusBadge(c.final_status)}</div>
-      <div class="case-item-date">${c.created_at}</div>
+function renderHtmlTable(rows) {
+  if (rows.length === 0) return '';
+  let hasSeparator = rows.length > 1 && rows[1].every(cell => cell.startsWith('-') || cell === '');
+  let startIdx = 0;
+  let headers = [];
+  
+  if (hasSeparator) {
+    headers = rows[0];
+    startIdx = 2;
+  }
+  
+  let html = '<table class="mini-table" style="margin-bottom:14px; width:100%; border-collapse:collapse; font-size:11px;">';
+  if (headers.length > 0) {
+    html += '<thead><tr>';
+    headers.forEach(h => {
+      html += `<th style="background:var(--hi-navy-tint); font-weight:700; color:var(--hi-navy); padding:6px 8px; border:1px solid var(--hi-line);">${h}</th>`;
+    });
+    html += '</tr></thead>';
+  }
+  html += '<tbody>';
+  for (let i = startIdx; i < rows.length; i++) {
+    html += '<tr>';
+    rows[i].forEach(cell => {
+      let cellColor = '';
+      let cellWeight = 'normal';
+      if (cell.trim() === '부책' || cell.trim().includes('부책')) { cellColor = 'color:#16a34a;'; cellWeight = 'bold'; }
+      if (cell.trim() === '면책' || cell.trim().includes('면책')) { cellColor = 'color:#ef4444;'; cellWeight = 'bold'; }
+      html += `<td style="padding:6px 8px; border:1px solid var(--hi-line); text-align:center; ${cellColor} font-weight:${cellWeight};">${cell}</td>`;
+    });
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  return html;
+}
+
+// ── 상세 패널 탭 전환 ──────────────────────────────────
+function switchDetailTab(tabId) {
+  currentDetailTab = tabId;
+  const btnReport = document.getElementById('tabReportBtn');
+  const btnAgent = document.getElementById('tabAgentBtn');
+  
+  if (tabId === 'report') {
+    btnReport.className = 'reset-btn active-tab';
+    btnAgent.className = 'reset-btn';
+    showCaseReport();
+  } else {
+    btnReport.className = 'reset-btn';
+    btnAgent.className = 'reset-btn active-tab';
+    if (!activeAgentId) activeAgentId = 'overview';
+    showAgentDetails(activeAgentId);
+  }
+}
+
+// ── 종합 보고서 렌더링 ──────────────────────────────────
+function showCaseReport() {
+  if (!currentCaseData) return;
+  const r = currentCaseData;
+  const titleEl = document.getElementById('detailTitle');
+  const subtitleEl = document.getElementById('detailSubTitle');
+  const contentEl = document.getElementById('detailContent');
+  
+  titleEl.textContent = `종합 심사 결과 보고서`;
+  subtitleEl.textContent = `사건번호: ${r.case_id} (${r.final_status})`;
+  
+  let verdictStyle = 'background:var(--hi-navy-tint); color:var(--hi-navy);';
+  if ((r.liability || {}).liability === '부책(보상)') verdictStyle = 'background:#f0fdf4; color:#16a34a; border: 1.5px solid #bbf7d0;';
+  else if ((r.liability || {}).liability === '부책(일부 담보 면책)' || (r.liability || {}).liability === '부책(일부 면책)') verdictStyle = 'background:var(--hi-orange-soft); color:var(--hi-orange-d); border: 1.5px solid var(--hi-orange-b);';
+  else if ((r.liability || {}).liability === '면책(미지급)') verdictStyle = 'background:#fef2f2; color:#ef4444; border: 1.5px solid #fca5a5;';
+  
+  let headerSummaryCard = `
+    <div style="margin-bottom:16px; padding:16px; border-radius:12px; ${verdictStyle} box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+      <div style="font-size:10px; font-weight:800; letter-spacing:0.5px; opacity:0.7; text-transform:uppercase;">최종 면부책 결론</div>
+      <div style="font-size:18px; font-weight:800; margin-top:2px;">${(r.liability || {}).liability || '심사 진행 중'}</div>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; border-top:1px solid rgba(0,0,0,0.08); padding-top:10px; font-size:12px;">
+        <div>사고 유형: <strong>${(r.normalized || {}).accident_type || '판독중'}</strong></div>
+        <div>과실 비율: <strong style="color:var(--hi-orange-d);">${(r.liability || {}).과실비율 || '산정중'}</strong></div>
+      </div>
     </div>
-  `).join('');
-}
-
-function statusBadge(status) {
-  if (status === '완료')         return '<span class="badge badge-done">완료</span>';
-  if (status === '추가자료 대기 중') return '<span class="badge badge-wait">자료 대기</span>';
-  return '<span class="badge badge-process">처리중</span>';
-}
-
-// ── 새 접수 폼 ──────────────────────────────────────
-function showNewForm() {
-  currentCaseId = null;
-  document.getElementById('mainArea').innerHTML = `
-    <div class="card">
-      <h2>📋 사고 접수</h2>
-      <div class="form-group">
-        <label>접수 내용 *</label>
-        <textarea id="userInput" rows="5"
-          placeholder="예) 주차장에서 후진하다 지나가던 차를 받았습니다."></textarea>
-      </div>
-      <div class="form-group">
-        <label>현장출동 여부</label>
-        <div style="display:flex;gap:12px;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0">
-            <input type="radio" name="dispatch" value="O"> 출동 요청
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0">
-            <input type="radio" name="dispatch" value="X" checked> 출동 없음
-          </label>
+  `;
+  
+  let actionHTML = '';
+  if (r.final_status === '추가자료 대기 중') {
+    const items = (r.extra_request || {}).request_items || [];
+    actionHTML = `
+      <div class="form-card" style="border-color:var(--hi-orange-b); background:var(--hi-orange-soft); margin-bottom:16px;">
+        <h4 style="font-weight:800; color:var(--hi-orange-d); margin-bottom:6px; font-size:12px;">⚠️ 자료 보완 필요 알림</h4>
+        <p style="font-size:11px; line-height:1.5; color:var(--hi-navy-ink); margin-bottom:10px;">
+          사실관계 확정을 위해 아래 자료의 제출이 필요합니다. 자료를 직접 업로드하거나 입증 텍스트를 기입하여 제출하세요.
+        </p>
+        <div style="background:#fff; border:1px solid var(--hi-orange-b); border-radius:6px; padding:10px; font-size:11px; margin-bottom:12px; line-height:1.5;">
+          ${items.map((it, idx) => `<strong>${idx+1}. ${it.item}</strong>: ${it.reason}`).join('<br>')}
         </div>
+        
+        <textarea id="reportExtraInput" rows="2" style="font-size:11px; margin-bottom:8px; border-color:var(--hi-orange-b);" placeholder="AI가 요청한 항목에 대해 직접 판독 사실이나 보완 사실을 작성하세요."></textarea>
+        <div style="margin-bottom:8px;">
+          <input type="file" id="reportExtraFiles" multiple accept="image/*" style="font-size:11px; width:100%;">
+        </div>
+        <button class="btn-submit" onclick="submitExtraFromReport('${r.case_id}')" style="background:var(--hi-orange); border-radius:6px; font-size:12px; padding:6px 12px;">보완 자료 즉시 제출</button>
       </div>
-      <div class="form-group">
-        <label>블랙박스 영상 URL (선택)</label>
-        <input type="text" id="videoUrl" placeholder="https://...">
-        <div style="font-size:0.8rem;color:#999;margin-top:4px">영상 판독은 담당자가 직접 수행합니다</div>
+    `;
+  } else if (r.final_status === '면책 검토 대기') {
+    const triggers = r.triggers || [];
+    const checkboxItems = [
+      { val: '고의', label: '🟢 고의 사고 정황 있음 (면책)' },
+      { val: '가족피해', label: '🟡 피해자가 피보험자의 직계 가족 (특약 전환 필요)' },
+      { val: '음주운전', label: '음주운전 혐의 (사고부담금 부과)' },
+      { val: '무면허운전', label: '무면허운전 혐의 (사고부담금 부과)' },
+      { val: '조치의무위반', label: '뺑소니/조치의무위반 (사고부담금)' },
+      { val: '운전자범위', label: '운전자 한정 특약 위반 (면책)' }
+    ];
+
+    const checkBoxesHTML = checkboxItems.map(item => {
+      const checked = triggers.includes(item.val) ? 'checked' : '';
+      return `
+        <label style="display:flex;align-items:center;gap:6px;padding:6px 4px;border-bottom:1px solid var(--hi-line);cursor:pointer;font-size:11px;font-weight:normal;">
+          <input type="checkbox" name="report_review_trigger" value="${item.val}" ${checked} style="width:14px;height:14px">
+          ${item.label}
+        </label>`;
+    }).join('');
+
+    actionHTML = `
+      <div class="form-card" style="border-color:#fca5a5; background:#fef2f2; margin-bottom:16px;">
+        <h4 style="font-weight:800; color:#ef4444; margin-bottom:6px; font-size:12px;">⚖️ 보상담당자 최종 면부책 심사 승인</h4>
+        <p style="font-size:11px; line-height:1.5; color:var(--hi-navy-ink); margin-bottom:10px;">
+          의무면책 및 특별 정황이 감지되었습니다. 면책 항목을 확인하시고 승인을 진행해 주십시오.
+        </p>
+        <div style="background:#fff; border:1px solid var(--hi-navy-line); border-radius:8px; padding:8px; margin-bottom:12px;">
+          ${checkBoxesHTML}
+        </div>
+        <button class="btn-submit" onclick="confirmTriggersFromReport('${r.case_id}')" style="background:#ef4444; border-radius:6px; font-size:12px; padding:6px 12px;">⚖️ 면책 승인 및 최종 종결</button>
       </div>
-      <div class="form-group">
-        <label>현장 사진 (선택)</label>
-        <input type="file" id="mediaFiles" multiple accept="image/*"
-               style="padding:8px;border:1px solid #d1d5db;border-radius:8px;width:100%;font-size:0.9rem">
-      </div>
-      <div class="form-group">
-        <label>추가 자료 설명 (선택)</label>
-        <textarea id="extraData" rows="2"
-          placeholder="영상 내용 또는 기타 참고사항을 입력하세요"></textarea>
-      </div>
-      <button class="btn-submit" onclick="submitCase()">⚖️ AI 분석 시작</button>
+    `;
+  }
+  
+  contentEl.innerHTML = `
+    ${headerSummaryCard}
+    ${actionHTML}
+    <div class="report-body" style="padding:4px 0;">
+      ${parseMarkdown(r.report)}
     </div>
   `;
 }
 
-// ── 사건 접수 ───────────────────────────────────────
+// ── 보완 자료 보고서 즉시 제출 ────────────────────────
+async function submitExtraFromReport(caseId) {
+  const extra = document.getElementById('reportExtraInput').value.trim();
+  if (!extra) { alert('보완 판독이나 조서 내용을 기입해주십시오.'); return; }
+
+  showLoading('보완 데이터 추가 분석 및 RAG 재기동 중...');
+
+  const fd = new FormData();
+  fd.append('extra_data', extra);
+  for (const f of document.getElementById('reportExtraFiles').files) fd.append('files', f);
+
+  try {
+    const res = await fetch(`${API}/api/cases/${caseId}/resume`, { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      hideLoading();
+      alert('오류 발생: ' + (err.detail || res.statusText));
+      return;
+    }
+    const result = await res.json();
+    hideLoading();
+    currentCaseId = result.case_id;
+    await loadCases();
+    renderWorkflowCanvas(result);
+  } catch (e) {
+    hideLoading();
+    alert('제출 실패: ' + e.message);
+  }
+}
+
+// ── 면책 최종 승인/확정 보고서 즉시 처리 ───────────────
+async function confirmTriggersFromReport(caseId) {
+  const confirmedTriggers = Array.from(document.querySelectorAll('input[name="report_review_trigger"]:checked'))
+    .map(cb => cb.value)
+    .join(',');
+
+  showLoading('면부책 최종 결과 및 과실 등 전 담보 종결 산정 중...');
+
+  const fd = new FormData();
+  fd.append('manual_triggers', confirmedTriggers);
+
+  try {
+    const res = await fetch(`${API}/api/cases/${caseId}/resume`, { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      hideLoading();
+      alert('오류 발생: ' + (err.detail || res.statusText));
+      return;
+    }
+    const result = await res.json();
+    hideLoading();
+    currentCaseId = result.case_id;
+    await loadCases();
+    renderWorkflowCanvas(result);
+  } catch (e) {
+    hideLoading();
+    alert('승인 중 오류 발생: ' + e.message);
+  }
+}
+
+const SCENARIOS = {
+  DJ_1: {
+    title: "[DJ] 정차 중 후미추돌 + 음주운전 사고부담금 (🟢)",
+    userInput: "신호 대기 상태로 편도 3차로 중 2차로에 정지해 있었는데, 뒤에서 주행하던 상대 차량이 감속하지 못하고 내 차량의 트렁크 부위를 그대로 정면으로 들이받았습니다. 목 뒤와 허리에 강한 충격을 받았습니다.",
+    dispatch: "X",
+    videoUrl: "https://www.hyundai-mock.com/video/dj-rear-collision.mp4",
+    extraData: "사고 발생 후 상대방 운전자와 대화 과정에서 술 냄새가 심하게 났으며, 현장에 경찰이 출동해 혈중알코올농도를 측정한 음주운전 상태입니다.",
+    triggers: ["음주운전"]
+  },
+  DJ_2: {
+    title: "[DJ] 주행 중 차선변경 차량에 충격 + 무면허 운전 승인 (🟡)",
+    userInput: "편도 3차로 도로에서 2차로로 규정 속도를 준수하여 정상적으로 직진 주행을 하고 있었는데, 1차로를 물리적으로 무리하게 달리던 상대 차량이 방향지시등도 켜지 않은 채 갑자기 2차로로 급하게 차선을 변경하며 내 차량 조수석 앞 휀더를 접촉했습니다.",
+    dispatch: "X",
+    videoUrl: "",
+    extraData: "상대 차량의 운전자가 면허가 없는 상태(면허 취소 상태)에서 운전하다 접촉한 사고입니다. 차량 소유자(부모)가 면허 취소 사실을 알고도 차 키를 내주어 승인한 정황이 있습니다.",
+    triggers: ["무면허운전"]
+  },
+  DJ_3: {
+    title: "[DJ] 신호 교차로 직진 vs 신호위반 + 대인배상 I 보호 (🔴)",
+    userInput: "신호 교차로에서 녹색 직진 신호를 확인한 후 정상 속도로 진입하여 통과하던 중, 우측 교차로 방면에서 신호를 위반하여 과속으로 그대로 진입한 상대 직진 차량이 내 차량 동승석 측면을 강하게 충돌했습니다. 상대방은 본인도 직진 신호에 진입했다고 억지 주장하고 있습니다.",
+    dispatch: "O",
+    videoUrl: "https://www.hyundai-mock.com/video/dj-traffic-violation.mp4",
+    extraData: "상대방 운전자가 만취 음주운전(혈중알코올농도 0.15%) 상태이며 면허 정지 상태에서 사고를 냈습니다. 조수석 탑승자가 늑골 골절 등으로 크게 다쳤습니다.",
+    triggers: ["음주운전", "무면허운전"]
+  },
+  JR_1: {
+    title: "[JR] 점선 구간 진로변경 + 운전자 범위 초과 (🟢)",
+    userInput: "교차로 진입 직전 차선이 백색 점선인 구간에서 방향지시등을 켜고 후방 안전을 대조한 뒤 3차로에서 4차로로 차로를 변경하여 진입하던 중, 4차로 후방에서 양보하지 않고 달려오던 차량과 측면 접촉 충돌했습니다.",
+    dispatch: "O",
+    videoUrl: "",
+    extraData: "피보험차량의 운전자가 가입 시 설정한 가족한정 특약의 연령 범위(가족 한정 운전자 범위)를 벗어난 사촌 동생이 운전하던 중 사고가 났습니다.",
+    triggers: ["운전자범위"]
+  },
+  JR_2: {
+    title: "[JR] 실선 구간 진로변경 + 자녀 무단운전 (🟡)",
+    userInput: "터널 진입 전 차로 도색이 백색 실선인 구간에서 우측 차선으로 무리하게 진로를 변경하여 진입하려던 중, 마침 우측 차로에서 직진 주행 중이던 차량이 내 차의 조수석 뒤쪽 휀더를 접촉했습니다.",
+    dispatch: "X",
+    videoUrl: "https://www.hyundai-mock.com/video/jr-solid-lane-change.mp4",
+    extraData: "기명 피보험자의 허락 없이 피보험자의 대학생 자녀가 차 키를 몰래 서랍에서 꺼내어 드라이브를 하던 중 발생한 무단 운전 사고입니다.",
+    triggers: ["운전자범위"]
+  },
+  JR_3: {
+    title: "[JR] 신호 없는 교차로 좌회전 + 무단운전 & 무면허 양립 (🔴)",
+    userInput: "신호등이 없는 이면도로 교차로에서 교차로 서행으로 진입하여 좌회전을 시도하고 있었는데, 교차로 우측 방면에서 속도를 전혀 줄이지 않고 돌진하여 진입하던 상대 직진 차량이 내 차량 동승석 측면을 들이받았습니다.",
+    dispatch: "X",
+    videoUrl: "",
+    extraData: "차주의 허락 없이 차량을 무단으로 절취하여 주행한 절취/무단 운전 상태이며, 운전자는 현재 면허 취소 기간으로 면허가 없는 무면허 상태입니다.",
+    triggers: ["운전자범위", "무면허운전"]
+  },
+  EY_1: {
+    title: "[EY] 주차장 후진 사고 + 고의 사고 정황 의심 (🟢)",
+    userInput: "대형마트 지하주차장 통로에서 주차 공간에 주차하기 위해 비상등을 켜고 서행 후진을 하던 중, 마침 주차장 통로 직진 방향으로 오던 상대 차량의 조수석 앞 문짝 부분을 내 차량 후미 범퍼로 충격했습니다.",
+    dispatch: "O",
+    videoUrl: "",
+    extraData: "상대방 차량이 내 후진 차를 발견하고 충분히 제동하거나 회피할 수 있는 공간이 넉넉했음에도 속도를 높여 들이받어 보험금을 청구한 고의 사고 정황이 의심됩니다.",
+    triggers: ["고의"]
+  },
+  EY_2: {
+    title: "[EY] 횡단보도 보행자 사고 + 피해자가 가족 (🟡)",
+    userInput: "보행신호등이 있는 교차로에서 적색 신호 대기 후 녹색 화살표를 확인하고 우회전을 실시하여 횡단보도를 통과하던 중, 보행자 녹색 신호에 횡단보도를 건너가던 보행자를 미처 발견하지 못하고 충격했습니다.",
+    dispatch: "O",
+    videoUrl: "https://www.hyundai-mock.com/video/ey-pedestrian-accident.mp4",
+    extraData: "횡단보도 보행 사고를 당해 병원에 입원한 피해 보행자가 운전자(피보험자)의 배우자(가족)인 것이 확인되어 대인II 면책 검토가 필요합니다.",
+    triggers: ["가족피해"]
+  },
+  EY_3: {
+    title: "[EY] 비보호 좌회전 vs 직진 + 무보험차상해 본인 부상 (🔴)",
+    userInput: "교차로에서 신호등 녹색 신호 시 비보호 좌회전을 시도하며 진입하고 있었는데, 맞은편 도로에서 신호를 받아 과속으로 교차로에 직진 진입하던 상대 차량이 내 차량을 충돌했습니다. 충격이 매우 커 본인 운전자도 심각한 경추 전위를 입었습니다.",
+    dispatch: "X",
+    videoUrl: "",
+    extraData: "상대방 사고 차량이 자동차보험에 가입하지 않은 무보험 차량(책임보험 대인 I만 가입)으로 확인되었습니다. 본인 운전자의 자기신체사고 및 무보험차상해 처리가 필요합니다.",
+    triggers: ["가족피해"]
+  },
+  YJ_1: {
+    title: "[YJ] 주차장 통로 vs 주차칸 출차 + 유상운송 카풀 (🟢)",
+    userInput: "아파트 단지 주차장 주차구획 칸에서 통로 방면으로 출차하기 위해 시속 10km 이하로 서서히 전진 진출하고 있었는데, 마침 주차장 주행 통로를 정상 속도로 직진해 지나가던 상대 차량의 측면 문짝을 내 차량 앞범퍼로 들이받았습니다.",
+    dispatch: "X",
+    videoUrl: "",
+    extraData: "피보험차량을 개인 출퇴근용으로 등록해두었으나, 실제로는 비용을 받고 불법 유상 운송(카풀 앱 등을 이용해 대가를 받고 유상 운송 영업)을 계속 반복하던 도중 낸 사고입니다.",
+    triggers: ["운전자범위"]
+  },
+  YJ_2: {
+    title: "[YJ] 유턴 vs 직진 + 자기차량 손해 사기 의심 (🟡)",
+    userInput: "유턴 허용 구간에서 좌회전 신호가 켜진 것을 보고 규정에 따라 핸들을 꺾어 유턴을 돌던 중, 맞은편 도로에서 적색 신호 지시를 무시하고 꼬리물기로 직진 통과하려던 상대 차량의 측면과 충돌했습니다.",
+    dispatch: "O",
+    videoUrl: "https://www.hyundai-mock.com/video/yj-uturn-accident.mp4",
+    extraData: "자기차량손해(자차) 수리비를 대폭 부풀리거나 동승자와 모의해 사고 이전의 노후 파손을 사고 피해로 위장 청구한 사기 혐의가 발견되었습니다.",
+    triggers: ["고의"]
+  },
+  YJ_3: {
+    title: "[YJ] 야간 무단횡단 보행자 + 고지의무 위반 해지 (🔴)",
+    userInput: "가로등이 거의 없어 매우 어두운 왕복 4차로 도로에서 1차로를 주행하던 중, 횡단보도가 없는 구역에서 갑자기 중앙분리대를 넘어 무단으로 횡단하던 보행자를 15m 앞에서 발견하고 급제동하였으나 정지하지 못하고 충격했습니다.",
+    dispatch: "X",
+    videoUrl: "",
+    extraData: "가입 시 개인 용도로 고지하였으나, 실상은 배달대행/택배 영업용(용도 변경)으로 상시 영업 중이었던 고지의무 위반 사실이 확인되었습니다.",
+    triggers: ["운전자범위"]
+  }
+};
+
+// ── 사건 목록 로딩 ──────────────────────────────────
+async function loadCases() {
+  try {
+    const res = await fetch(`${API}/api/cases`);
+    const list = await res.json();
+    const el = document.getElementById('caseList');
+
+    if (!list.length) {
+      el.innerHTML = `
+        <div class="detail-empty" style="padding:30px 0">
+          <div class="detail-empty-icon">📁</div>
+          <div>접수된 사건이 없습니다.</div>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = list.map(c => `
+      <div class="case-item ${c.case_id === currentCaseId ? 'active' : ''}" onclick="loadCase('${c.case_id}')">
+        <div class="case-item-id">${c.case_id}</div>
+        <div class="case-item-type">${c.accident_type || '사고보상 분석'}</div>
+        <div style="margin:6px 0">${statusBadge(c.final_status)}</div>
+        <div class="case-item-date">⏳ 접수일: ${c.created_at}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error("사건 목록 로드 오류:", e);
+  }
+}
+
+function statusBadge(status) {
+  if (status === '완료') return '<span class="badge badge-done">완료</span>';
+  if (status === '추가자료 대기 중') return '<span class="badge badge-wait">자료 대기</span>';
+  if (status === '면책 검토 대기') return '<span class="badge badge-review">면책 검토</span>';
+  return '<span class="badge badge-process">처리중</span>';
+}
+
+// ── RAG 검증기 화면 기동 ──────────────────────────────
+function showRagTester() {
+  currentCaseId = null;
+  currentCaseData = null;
+  activeAgentId = null;
+  resetAgentCardHighlights();
+
+  document.getElementById('mainArea').innerHTML = `
+    <div class="canvas-inner" style="max-width:700px">
+      <div class="form-card">
+        <h2 style="font-size:16px;font-weight:800;color:var(--hi-navy);margin-bottom:18px;border-bottom:2px solid var(--hi-orange);padding-bottom:8px">🔎 RAG 검색 실시간 검증기</h2>
+        <p style="font-size:12px;color:var(--hi-soft);margin-bottom:16px;line-height:1.5">
+          가상 시나리오에 한정되지 않고, <b>실제 벡터 인덱스(BAAI/bge-m3)</b>를 대상으로 검색이 원활한지 테스트합니다. 약관이나 판례에서 찾고 싶은 내용을 한글로 입력하세요.
+        </p>
+
+        <div class="form-group">
+          <label>검색 데이터베이스 종류</label>
+          <div style="display:flex;gap:16px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:bold;color:var(--hi-navy)">
+              <input type="radio" name="ragType" value="clause" checked> 📜 현대해상 약관 조항 (453 chunks)
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:bold;color:var(--hi-navy)">
+              <input type="radio" name="ragType" value="verdict"> ⚖️ 대법원/지방 판결문 (1,074 chunks)
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>검색 질의어 (Query) *</label>
+          <input type="text" id="ragQuery" placeholder="검색할 질문이나 키워드를 기입하세요 (예: 음주운전 면책 조항, 무단운전 운행지배, 유상운송, 비보호 좌회전 과실비율 등)" style="font-size:13px;padding:10px 12px">
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px">
+          <div>
+            <label>검색 결과 수 (top_k)</label>
+            <select id="ragTopK" style="padding: 8px; border-radius: 6px; border: 1px solid var(--hi-navy-line); font-size: 13px; width:100%; background:#fff; outline:none">
+              <option value="3">3개 매칭</option>
+              <option value="5" selected>5개 매칭 (추천)</option>
+              <option value="8">8개 매칭</option>
+              <option value="10">10개 매칭</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:flex-end">
+            <button class="btn-submit" onclick="runRagSearch()" style="height:37px;font-size:13px">🔎 인덱스 검색 실행</button>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;border-top:1.5px dashed var(--hi-navy-line);padding-top:16px">
+          <div style="font-size:13px;font-weight:800;color:var(--hi-navy);margin-bottom:10px">📡 RAG 실시간 조회 결과</div>
+          <div id="ragResultsArea" style="min-height:100px">
+            <div style="text-align:center;color:var(--hi-muted);font-size:12px;padding:30px 0">검색 조건을 입력한 후 [인덱스 검색 실행] 버튼을 클릭하세요.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 우측 협업 패널을 헬프 메시지로 세팅
+  document.getElementById('detailTabs').style.display = 'none';
+  document.getElementById('detailTitle').textContent = 'RAG 실시간 검증기';
+  document.getElementById('detailSubTitle').textContent = 'Vector DB Playground';
+  document.getElementById('detailContent').innerHTML = `
+    <div class="form-card" style="border-color:var(--hi-navy-b);background:var(--hi-navy-tint)">
+      <h4 style="font-weight:800;color:var(--hi-navy);margin-bottom:6px">💡 RAG 검증 요령</h4>
+      <p style="font-size:12px;line-height:1.6;color:var(--hi-navy-ink)">
+        현재 백엔드 시스템은 현대해상의 실제 개인용자동차보험 약관 PDF를 기반으로 청킹된 벡터 인덱스를 메모리에 상주시켜 두고 검색합니다.
+        <br><br>
+        <b>추천 테스트 질문:</b>
+        <br>
+        • "피보험자의 고의사고"<br>
+        • "자녀가 부모 허락없이 운전한 경우"<br>
+        • "호의동승 감액 기준"<br>
+        • "출퇴근 카풀 유상운송"<br>
+        • "음주운전 대인배상 사고부담금"
+      </p>
+    </div>
+  `;
+}
+
+// ── RAG 검색 실행 ──────────────────────────────────
+async function runRagSearch() {
+  const query = document.getElementById('ragQuery').value.trim();
+  if (!query) { alert('검색 질의어를 입력해주십시오.'); return; }
+
+  const type = document.querySelector('input[name="ragType"]:checked').value;
+  const topK = document.getElementById('ragTopK').value;
+
+  const resultsArea = document.getElementById('ragResultsArea');
+  resultsArea.innerHTML = `<div style="text-align:center;padding:30px 0"><div class="spinner" style="border-top-color:var(--hi-navy);margin:0 auto 10px"></div><span style="font-size:12px;color:var(--hi-navy)">인덱스 임베딩 인코딩 및 시밀러리티 검색 중...</span></div>`;
+
+  try {
+    const res = await fetch(`${API}/api/search?query=${encodeURIComponent(query)}&type=${type}&top_k=${topK}`);
+    if (!res.ok) {
+      alert('RAG 검색 중 서버 오류 발생');
+      resultsArea.innerHTML = `<div style="text-align:center;color:red;font-size:12px;padding:20px 0">조회에 실패했습니다.</div>`;
+      return;
+    }
+    const data = await res.json();
+    if (!data.length) {
+      resultsArea.innerHTML = `<div style="text-align:center;color:var(--hi-muted);font-size:12px;padding:30px 0">검색 조건에 부합하는 매칭 청크가 없습니다.</div>`;
+      return;
+    }
+
+    if (type === 'clause') {
+      resultsArea.innerHTML = data.map((r, idx) => `
+        <div class="rag-result-card">
+          <div class="rag-result-header">
+            <span>[매칭 ${idx+1}] ${r.article} ${r.title} (페이지: ${r.page}p) <span style="color:#d97e00;font-weight:700;margin-left:6px">(유사도: ${(r.score * 100).toFixed(1)}%)</span></span>
+            <span class="rag-result-score">${r.is_exemption ? '🔴 면책조항' : '🟢 부책/기타'}</span>
+          </div>
+          <div class="rag-result-body">
+            ${highlightText(r.text, query)}
+            <div style="font-size:10px;color:var(--hi-muted);margin-top:6px;display:flex;gap:10px">
+              <span>담보범위: ${r.coverage || '공통'}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      resultsArea.innerHTML = data.map((r, idx) => `
+        <div class="rag-result-card">
+          <div class="rag-result-header">
+            <span>[매칭 ${idx+1}] 판례번호: ${r.case_num} (${r.court}) <span style="color:#d97e00;font-weight:700;margin-left:6px">(유사도: ${(r.score * 100).toFixed(1)}%)</span></span>
+            <span class="rag-result-score">${r.date || '날짜미상'}</span>
+          </div>
+          <div class="rag-result-body">
+            <strong>사건명:</strong> ${r.issue || '사건명 정보 없음'}<br>
+            <div style="margin-top:6px;background:var(--hi-page);padding:8px;border-radius:6px">
+              <strong>판결 요약:</strong> ${highlightText(r.summary || r.full_text.substring(0, 300) + '...', query)}
+            </div>
+            <div style="font-size:10px;color:var(--hi-muted);margin-top:6px">
+              키워드: ${r.keywords.join(', ')}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (e) {
+    alert('RAG 검색 중 장애 발생: ' + e.message);
+    resultsArea.innerHTML = `<div style="text-align:center;color:red;font-size:12px;padding:20px 0">오류: ${e.message}</div>`;
+  }
+}
+
+// ── 검색 결과 키워드 하이라이팅 ───────────────────────
+function highlightText(text, query) {
+  if (!text) return '';
+  const words = query.split(/\s+/).filter(w => w.length > 1);
+  if (!words.length) return text;
+  let highlighted = text;
+  words.forEach(word => {
+    try {
+      const regex = new RegExp(`(${word})`, 'gi');
+      highlighted = highlighted.replace(regex, `<mark style="background:yellow;color:black;font-weight:bold">$1</mark>`);
+    } catch(e) {}
+  });
+  return highlighted;
+}
+
+// ── 새 사건 접수 폼 렌더링 (탭 통합 버전) ───────────────
+function showNewForm() {
+  currentCaseId = null;
+  currentCaseData = null;
+  activeAgentId = null;
+  resetAgentCardHighlights();
+
+  // 중앙 캔버스 영역에 접수/시나리오/시뮬레이터 통합 폼 렌더링
+  document.getElementById('mainArea').innerHTML = `
+    <div class="canvas-inner" style="max-width:700px">
+      <div class="form-card">
+        <h2 style="font-size:16px;font-weight:800;color:var(--hi-navy);margin-bottom:12px;border-bottom:2px solid var(--hi-orange);padding-bottom:8px">🚗 신규 사고보상 AI 심사 기동</h2>
+        
+        <!-- 접수 방식 전환 탭 -->
+        <div style="display:flex; gap:6px; margin-bottom:18px; border-bottom:2px solid var(--hi-line); padding-bottom:8px">
+          <button class="reset-btn ${activeFormTab === 'simulator' ? 'active-tab' : ''}" id="tabSimulatorBtn" onclick="switchFormTab('simulator')" style="flex:1.2; border-color:transparent; font-weight:800; height:35px; border-radius:6px">⚙️ 고객 &amp; 담보 시뮬레이터</button>
+          <button class="reset-btn ${activeFormTab === 'scenario' ? 'active-tab' : ''}" id="tabScenarioBtn" onclick="switchFormTab('scenario')" style="flex:1; border-color:transparent; font-weight:800; height:35px; border-radius:6px">🗂 실습 시나리오</button>
+          <button class="reset-btn ${activeFormTab === 'simple' ? 'active-tab' : ''}" id="tabSimpleBtn" onclick="switchFormTab('simple')" style="flex:0.8; border-color:transparent; font-weight:800; height:35px; border-radius:6px">📝 일반 자유접수</button>
+        </div>
+
+        <!-- ──────────────── [TAB 1: 시뮬레이터] ──────────────── -->
+        <div id="formSectionSimulator" style="display:${activeFormTab === 'simulator' ? 'block' : 'none'}">
+          <div class="sim-section-title">1단계: 가상 고객 및 가입 특약 정보 정의</div>
+          <div class="sim-grid">
+            <div class="form-group">
+              <label>기명피보험자 (보험계약 차주)</label>
+              <input type="text" id="simInsured" value="홍길동" onchange="autoBuildSimStatement()" style="font-size:12px; padding:6px 10px">
+            </div>
+            <div class="form-group">
+              <label>실제 사고 운전자</label>
+              <input type="text" id="simDriver" value="홍길동" onchange="autoBuildSimStatement()" style="font-size:12px; padding:6px 10px">
+            </div>
+          </div>
+          <div class="sim-grid">
+            <div class="form-group">
+              <label>기명피보험자와 실제 운전자의 관계</label>
+              <select id="simRelation" onchange="autoBuildSimStatement()" style="padding:6px 8px; font-size:12px; width:100%; border:1px solid var(--hi-navy-line); border-radius:6px; background:#fff">
+                <option value="본인" selected>본인 (1인 기명)</option>
+                <option value="배우자">배우자 (법률상/사실혼)</option>
+                <option value="자녀">자녀 (친생자/입양아)</option>
+                <option value="부모">부모 (직계존속)</option>
+                <option value="가족(기타)">형제/사촌 (가족 한정 범위 내)</option>
+                <option value="타인">타인 (가족 범위 밖/대리운전/절도 등)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>보험 계약 상 가입된 운전자 한정 특약</label>
+              <select id="simRider" onchange="autoBuildSimStatement()" style="padding:6px 8px; font-size:12px; width:100%; border:1px solid var(--hi-navy-line); border-radius:6px; background:#fff">
+                <option value="누구나" selected>누구나 운전 가능 (기본)</option>
+                <option value="가족한정">가족 운전자 한정 특약</option>
+                <option value="부부한정">부부 운전자 한정 특약</option>
+                <option value="기명피보험자1인">기명피보험자 1인 한정 특약</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="sim-section-title">2단계: 가입 담보 설정 (보험 상품 옵션)</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; background:#f8fafc; padding:10px; border:1px solid var(--hi-navy-line); border-radius:8px; margin-bottom:12px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="covBodily1" checked disabled> 대인배상 I (의무)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="covBodily2" checked> 대인배상 II (가입)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="covProperty" checked> 대물배상 (가입)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="covSelf" checked> 자기신체사고 (가입)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="covCar" checked> 자기차량손해 (가입)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="covUninsured" checked> 무보험차상해 (가입)</label>
+          </div>
+
+          <div class="sim-section-title">3단계: 사고 유형 및 정황 정의 (면책 옵션 연동)</div>
+          <div class="form-group">
+            <label>기본 사고 상황 유형 분류</label>
+            <select id="simAccidentType" onchange="autoBuildSimStatement()" style="padding:6px 8px; font-size:12px; width:100%; border:1px solid var(--hi-navy-line); border-radius:6px; background:#fff">
+              <option value="정차 중 후미추돌" selected>정차 중 후미추돌 사고</option>
+              <option value="주행 중 차선변경 접촉">주행 중 차선변경 접촉 사고</option>
+              <option value="신호 교차로 직진 vs 신호위반">신호 교차로 직진 vs 신호위반 사고</option>
+              <option value="점선 구간 진로변경 접촉">점선 구간 진로변경 접촉 사고</option>
+              <option value="실선 구간 진로변경 접촉">실선 구간 진로변경 접촉 사고</option>
+              <option value="신호 없는 교차로 좌회전 vs 직진">신호 없는 교차로 좌회전 vs 직진 사고</option>
+              <option value="후진 사고">후진 사고 (주차장 등)</option>
+              <option value="횡단보도 보행자 사고">횡단보도 보행자 접촉 사고</option>
+              <option value="비보호 좌회전 vs 직진">비보호 좌회전 vs 직진 사고</option>
+              <option value="주차장 통로 vs 주차구획 진출입">주차장 통로 vs 주차구획 진출입 사고</option>
+              <option value="유턴 vs 직진">유턴 vs 직진 사고</option>
+              <option value="야간 무단횡단 보행자">야간 무단횡단 보행자 사고</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>면책 및 특이 정황 지정 (체크 시 AI 진술서에 해당 내용이 자동 포함됩니다)</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f8fafc; padding:10px; border:1px solid var(--hi-navy-line); border-radius:8px">
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simDui" onchange="autoBuildSimStatement()"> 🟢 운전자 음주운전 상태</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simUnlicensed" onchange="autoBuildSimStatement()"> 🟡 운전자 무면허 상태</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simDrug" onchange="autoBuildSimStatement()"> 💊 마약/약물 흡입 정황</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simHitRun" onchange="autoBuildSimStatement()"> 🚨 사고 미조치 뺑소니 도주</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simIntentional" onchange="autoBuildSimStatement()"> 🔴 고의 사고 유발 혐의</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simCommercial" onchange="autoBuildSimStatement()"> 💼 대가 목적 영리 유상운송</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simFraud" onchange="autoBuildSimStatement()"> ⚠️ 자차 허위 청구(보험사기)</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simDisclosure" onchange="autoBuildSimStatement()"> 📝 가입 용도 허위고지(알릴의무위반)</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simFamilyVictim" onchange="autoBuildSimStatement()"> 👨‍👩‍👧‍👦 피해자가 배우자/자녀/부모(가족관계)</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simUnauthorized" onchange="autoBuildSimStatement()"> 🔑 차주 허락 없는 무단운행 정황</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simTheft" onchange="autoBuildSimStatement()"> 🚔 제3자 차량 절취 및 도난운전</label>
+<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:normal;margin:0"><input type="checkbox" id="simDriverLimit" onchange="autoBuildSimStatement()"> 🔞 연령/가족 한정 운전자 범위 초과</label>
+</div>
+          </div>
+
+          <div class="sim-section-title">4단계: 진술서 및 현장 자료 자동 생성</div>
+          <div class="form-group">
+            <label>생성된 사고 진술서 (편집 가능)</label>
+            <textarea id="simStatement" rows="4" style="font-size:12px; line-height:1.5" placeholder="위의 옵션들을 변경하시면 여기에 최적의 진술 조서 텍스트가 자동 구성됩니다."></textarea>
+          </div>
+          <div class="form-group">
+            <label>추가 기입 사정 및 보완 조사 (편집 가능)</label>
+            <textarea id="simExtra" rows="2" style="font-size:12px; line-height:1.5" placeholder="트리거 요건에 대한 세부 정황이 자동 입력됩니다."></textarea>
+          </div>
+
+          <div class="sim-grid">
+            <div class="form-group">
+              <label>현장출동 요청</label>
+              <div style="display:flex;gap:16px;margin-top:6px">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px"><input type="radio" name="simDispatch" value="O"> 예</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px"><input type="radio" name="simDispatch" value="X" checked> 아니오</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>블랙박스 영상 URL</label>
+              <input type="text" id="simVideoUrl" placeholder="https://..." style="font-size:12px; padding:6px 10px">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>현장 입증 사진 (선택)</label>
+            <input type="file" id="simMediaFiles" multiple accept="image/*" style="font-size:12px; padding:6px">
+          </div>
+          
+          <button class="btn-submit" onclick="submitSimCase()" style="height:44px; font-size:14px">⚖️ 시뮬레이터 기반 분석 기동</button>
+        </div>
+
+        <!-- ──────────────── [TAB 2: 실습 시나리오] ──────────────── -->
+        <div id="formSectionScenario" style="display:${activeFormTab === 'scenario' ? 'block' : 'none'}">
+          <div class="form-group" style="background: var(--hi-navy-tint); padding: 12px; border-radius: 10px; border: 1px solid var(--hi-navy-b); margin-bottom: 16px;">
+            <label style="color: var(--hi-navy); font-weight: 700; margin-bottom: 6px;">📋 2주차 / 3주차 실습 시나리오 로딩</label>
+            <select id="scenarioSelect" onchange="loadScenarioTemplate()" style="padding: 8px; border-radius: 6px; border: 1px solid var(--hi-navy-line); font-size: 12px; width:100%; outline:none; background:#fff; font-weight:bold; color:var(--hi-navy-2)">
+              <option value="">-- 테스트할 실습 시나리오를 선택하세요 (자동 입력) --</option>
+              <optgroup label="[DJ] 음주 · 무면허 · 약물">
+                <option value="DJ_1">🟢 음주운전 사고부담금 (정차 중 후미추돌)</option>
+                <option value="DJ_2">🟡 무면허 운전 명시/묵시 승인 판단 (차선변경 충격)</option>
+                <option value="DJ_3">🔴 대인배상 I 보호 및 구상 처리 (신호위반 충격)</option>
+              </optgroup>
+              <optgroup label="[JR] 운전자 범위 · 무단 · 절취">
+                <option value="JR_1">🟢 가족 한정 한정특약 범위 밖 운전 (점선 차로변경)</option>
+                <option value="JR_2">🟡 자녀 무단운전 운행지배 상실 검증 (실선 차로변경)</option>
+                <option value="JR_3">🔴 무단운전 + 무면허 양립 판단 (신호없는 교차로)</option>
+              </optgroup>
+              <optgroup label="[EY] 고의 · 인적관계 · 자기신체">
+                <option value="EY_1">🟢 고의 사고 유발 혐의 면책 (후진 사고)</option>
+                <option value="EY_2">🟡 보행자 피해자가 배우자 가족 대인II 면책 (횡단보도 사고)</option>
+                <option value="EY_3">🔴 무보험차 상해 & 자기신체사고 검토 (비보호 좌회전)</option>
+              </optgroup>
+              <optgroup label="[YJ] 사용형태 · 계약">
+                <option value="YJ_1">🟢 유상운송 카풀 계속/반복 영업 면책 (주차장 진출입)</option>
+                <option value="YJ_2">🟡 자차 손해 사기/횡령 청구 면책 (유턴 vs 직진)</option>
+                <option value="YJ_3">🔴 업무용 숨긴 고지의무 위반 해지 (야간 무단횡단)</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- ──────────────── [TAB 3: 일반 자유접수 & 시나리오 파퓰레이트 입력폼] ──────────────── -->
+        <div id="formSectionSimple" style="display:${activeFormTab === 'simple' || activeFormTab === 'scenario' ? 'block' : 'none'}">
+          <div class="form-group">
+            <label>사고내용 진술서 *</label>
+            <textarea id="userInput" rows="5" placeholder="사고 경위 및 피해 상황을 상세히 기술해주십시오.&#10;예) 교차로에서 좌회전 신호를 대기하고 있는데, 상대 차량이 차선 변경 중 내 차량 조수석 범퍼 부위를 충격했습니다."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>현장출동 요청 여부</label>
+            <div style="display:flex;gap:16px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+                <input type="radio" name="dispatch" value="O"> 출동 요청함
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+                <input type="radio" name="dispatch" value="X" checked> 출동 없음
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>현장 사진 파일 첨부 (선택)</label>
+            <input type="file" id="mediaFiles" multiple accept="image/*" style="padding:8px;border:1px solid var(--hi-navy-line);border-radius:8px;width:100%;font-size:12px;background:#fff">
+          </div>
+
+          <div class="form-group">
+            <label>블랙박스/CCTV 영상 링크 URL (선택)</label>
+            <input type="text" id="videoUrl" placeholder="https://...">
+          </div>
+
+          <div class="form-group">
+            <label>특이사항 및 보완 설명 (선택)</label>
+            <textarea id="extraData" rows="2" placeholder="기타 참고 영상 시간대나 사고 상황에 대한 추가 기술 내용"></textarea>
+          </div>
+
+          <!-- 수동 면책/인적 요건 설정 -->
+          <div class="form-group" style="border-top:1.5px dashed var(--hi-navy-line);padding-top:16px;margin-top:16px">
+            <label style="color:var(--hi-navy);font-weight:700">⚙️ 사고 정황/면책 요건 초기 강제 지정 (선택)</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--hi-page);padding:12px;border:1px solid var(--hi-navy-line);border-radius:8px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:normal">
+                <input type="checkbox" name="manual_trigger" value="고의"> 🟢 고의 사고 정황
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:normal">
+                <input type="checkbox" name="manual_trigger" value="가족피해"> 🟡 피보험자의 가족 피해
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:normal">
+                <input type="checkbox" name="manual_trigger" value="음주운전"> 음주운전 해당
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:normal">
+                <input type="checkbox" name="manual_trigger" value="무면허운전"> 무면허운전 해당
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:normal">
+                <input type="checkbox" name="manual_trigger" value="조치의무위반"> 뺑소니/조치의무위반
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:normal">
+                <input type="checkbox" name="manual_trigger" value="운전자범위"> 운전자 한정 특약 위반
+              </label>
+            </div>
+          </div>
+
+          <button class="btn-submit" onclick="submitCase()" style="margin-top:10px;height:45px;font-size:14px">⚖️ 멀티 에이전트 분석 기동</button>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  // 시뮬레이터 진술서 자동 작성 실행
+  if (activeFormTab === 'simulator') {
+    autoBuildSimStatement();
+  }
+
+  // 우측 영역 초기화
+  document.getElementById('detailTabs').style.display = 'none';
+  document.getElementById('detailTitle').textContent = '새 사고 접수';
+  document.getElementById('detailSubTitle').textContent = '접수 데이터를 입력하고 계십니다.';
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-empty">
+      <div class="detail-empty-icon">📝</div>
+      <div>좌측의 양식에 맞춰 진술과 첨부파일을 기입하신 후 하단의 [분석 기동] 버튼을 클릭하시면 실시간 AI 심사가 진행됩니다.</div>
+    </div>
+  `;
+}
+
+// ── 폼 탭 스위처 ────────────────────────────────────
+function switchFormTab(tabId) {
+  activeFormTab = tabId;
+  showNewForm();
+}
+
+// ── 시뮬레이터 진술서 및 보완설명 자동 작성 로직 ─────────
+function autoBuildSimStatement() {
+  if (activeFormTab !== 'simulator') return;
+
+  const insured = document.getElementById('simInsured').value.trim() || '홍길동';
+  const driver = document.getElementById('simDriver').value.trim() || '홍길동';
+  const relation = document.getElementById('simRelation').value;
+  const rider = document.getElementById('simRider').value;
+  const accType = document.getElementById('simAccidentType').value;
+
+  // 1. 사고유형별 기본 진술 조서 매핑
+  let collisionText = "";
+  if (accType === "정차 중 후미추돌") {
+    collisionText = "신호 대기 순번을 확인하고 차량을 멈춰 서서 정차하고 있었는데, 뒤에서 전방 주시를 태만히 하며 직진 주행을 하던 상대 차량이 감속하지 못한 채 내 차량의 뒷범퍼 부위를 그대로 충돌했습니다.";
+  } else if (accType === "주행 중 차선변경 접촉") {
+    collisionText = "편도 3차선 도로에서 2차로를 따라 정상 직진 주행 중이었습니다. 그 와중 1차로를 주행하던 상대방 차량이 차선 변경 불가 실선이 아닌 점선 구간에서 방향지시등 작동 없이 2차로로 급하게 꺾어 차로 변경을 시도하여, 내 차 조수석 측면 휀더 및 문짝 부위를 쓸고 지나가 접촉 충돌했습니다.";
+  } else if (accType === "신호 교차로 직진 vs 신호위반") {
+    collisionText = "녹색 직진 신호를 확인한 상태로 교차로를 서행 통과하려 진입했으나, 교차로 좌측 방면에서 적색 정지 신호를 무시하고 직진으로 위반 진입한 상대방 차량이 내 차량의 운전석 범퍼 측면을 그대로 강하게 충격했습니다.";
+  } else if (accType === "점선 구간 진로변경 접촉") {
+    collisionText = "점선 구간으로 차로 변경이 허용되는 지점에서 방향지시등을 점등하고 변경할 우측 차로를 대조한 뒤 조심스럽게 차선을 변경하고 있었는데, 해당 차로 후방에서 양보하지 않고 가속해오던 상대 직진 차량이 내 차의 뒷부분 측면을 들이받았습니다.";
+  } else if (accType === "실선 구간 진로변경 접촉") {
+    collisionText = "터널 진입을 목적으로 백색 실선(차선 변경 금지 구역)인 지점에서 무리하게 우측 차선으로 차로 변경을 실시하여 진입하던 도중, 마침 그 차로를 통해 선행 직진 중이던 상대방 차량의 조수석 뒤 휀더 부위를 내 앞 범퍼로 들이받았습니다.";
+  } else if (accType === "신호 없는 교차로 좌회전 vs 직진") {
+    collisionText = "신호등이 별도로 설치되어 있지 않은 골목 교차로 지점에서 주변 서행 여부를 검증하고 좌회전 차선을 따라 천천히 진입하고 있던 중, 교차로 우측에서 감속하지 않고 빠른 속도로 진입하여 지나가려던 상대방 직진 차량이 내 조수석 측면 문짝을 강하게 들이받았습니다.";
+  } else if (accType === "후진 사고") {
+    collisionText = "아파트 주차 구획 공간에 차를 대기 위해 비상 점멸등을 작동한 상태에서 천천히 후진하고 있었습니다. 그 순간 통로를 지나가던 상대 차량의 측면 휀더 부위를 내 차의 뒤쪽 범퍼 부위로 충격하는 비접촉성 사고가 발생했습니다.";
+  } else if (accType === "횡단보도 보행자 사고") {
+    collisionText = "교차로를 우회전하여 통과하자마자 직후에 나타난 보행자 횡단보도를 지나고 있었는데, 보행자 신호등이 녹색 신호인 상태에서 횡단을 시도하던 보행자(피해자)를 차마 보지 못하고 차량 정면 범퍼로 충격해 쓰러트렸습니다.";
+  } else if (accType === "비보호 좌회전 vs 직진") {
+    collisionText = "비보호 좌회전 표지판 및 직진 녹색 신호가 점등된 신호 조건 하에서 반대편 차선 차량 흐름을 확인하며 좌회전을 수행 중이었습니다. 그러나 맞은편 도로에서 정상 신호를 받고 과속으로 직진하던 상대 차량과 교차로 중심부에서 부딪혔습니다.";
+  } else if (accType === "주차장 통로 vs 주차구획 진출입") {
+    collisionText = "주차칸 구획 내에 주차해두었던 차량을 통로 방향으로 빠져나가기 위해 전면 출차를 조심스레 진행하고 있었는데, 통로를 따라 주행해 오던 상대 차량의 측면 조수석 부위를 내 앞 범퍼 모서리로 접촉했습니다.";
+  } else if (accType === "유턴 vs 직진") {
+    collisionText = "좌회전 신호가 켜진 것을 육안 대조하고 유턴 차선에서 정상 방향으로 유턴을 도는 중이었는데, 반대 차선에서 신호를 위반하고 무리하게 꼬리물기로 돌진하던 상대방 직진 차량과 측면 충돌하는 사고가 났습니다.";
+  } else if (accType === "야간 무단횡단 보행자") {
+    collisionText = "가로등 설치가 되어 있지 않아 전방 시인성이 10m 안팎으로 매우 취약한 심야 시간대 도로의 1차로를 서행하고 있었습니다. 갑자기 무단 횡단 금지 분리대를 넘어 도로 한가운데로 무단 횡단을 감행하던 보행자를 늦게 인지하여 충격했습니다.";
+  }
+
+  // 2. 특약 및 고객 계약 관계에 기반한 추가 문장 조립
+  let contractText = "";
+  let isDriverBreach = false;
+  if (insured !== driver) {
+    contractText += `\n[피보험자와의 운전자 관계] 기명 피보험자는 '${insured}'이나 실제 사고 당시 운전한 사람은 '${driver}'(피보험자의 ${relation})입니다.`;
+  }
+  
+  // 가족특약 범위 대조
+  if (relation === '타인' && (rider === '가족한정' || rider === '부부한정' || rider === '기명피보험자1인')) {
+    isDriverBreach = true;
+  } else if (relation === '가족(기타)' && (rider === '부부한정' || rider === '기명피보험자1인')) {
+    isDriverBreach = true;
+  } else if (relation === '자녀' && (rider === '부부한정' || rider === '기명피보험자1인')) {
+    isDriverBreach = true;
+  } else if (relation === '부모' && (rider === '부부한정' || rider === '기명피보험자1인')) {
+    isDriverBreach = true;
+  } else if (relation === '배우자' && rider === '기명피보험자1인') {
+    isDriverBreach = true;
+  }
+
+  if (isDriverBreach) {
+    contractText += ` 현재 계약은 '${rider}' 조건으로 제한되어 있어 실제 운전자 범위 초과 위반 정황이 존재합니다.`;
+  }
+
+  // 3. 면책 옵션 체크박스 상태에 따른 텍스트 및 트리거 수집
+  let extraCircumstance = "";
+  if (document.getElementById('simDui').checked) {
+    extraCircumstance += " 사고 조사 결과 당시 실제 운전자가 술을 마신 음주운전 상태(또는 혈중알코올 수치 확인)였던 것이 밝혀졌습니다.";
+  }
+  if (document.getElementById('simUnlicensed').checked) {
+    extraCircumstance += " 운전자가 유효한 운전면허가 없는 면허 취소 및 무면허 상태에서 운행을 강행하다 발생한 무면허운전 사고입니다.";
+  }
+  if (document.getElementById('simDrug').checked) {
+    extraCircumstance += " 운전자의 마약/약물 흡입 혐의 정황 및 약물로 인한 정상 운전 곤란 상태가 추가로 접수되었습니다.";
+  }
+  if (document.getElementById('simHitRun').checked) {
+    extraCircumstance += " 사고를 유발하고 현장에서 필요한 인명 조치나 연락처 제공 의무를 다하지 않은 채 뺑소니로 도주했습니다.";
+  }
+  if (document.getElementById('simIntentional').checked) {
+    extraCircumstance += " 가해 및 피해 차량 중 고의성이 의심되는 일방적 충돌 유발 및 미필적 고의 정황이 보고되었습니다.";
+  }
+  if (document.getElementById('simCommercial').checked) {
+    extraCircumstance += " 영리 목적으로 계속·반복적으로 대가를 수취하고 타인을 승차시켜 운송하는 유상운송 영업 중 사고입니다.";
+  }
+  if (document.getElementById('simFraud').checked) {
+    extraCircumstance += " 자차 수리비 보상을 타내기 위해 사고 이전의 파손 흔적을 속이거나 고의로 훼손한 사기 횡령 혐의입니다.";
+  }
+  if (document.getElementById('simDisclosure').checked) {
+    extraCircumstance += " 차량을 배달 대행 등 영업용도로 주로 활용함에도 개인 승용 용도로 속여 가입한 계약전 알릴의무 위반 사정이 있습니다.";
+  }
+  if (document.getElementById('simFamilyVictim').checked) {
+    extraCircumstance += " 이번 사고로 크게 다치거나 병원 치료를 받는 피해자(보행자 또는 동승객)가 피보험자의 배우자, 자녀, 부모 등 가족 관계에 해당하여 대인배상II 면책 검토 대상입니다.";
+  }
+  if (document.getElementById('simUnauthorized').checked) {
+    extraCircumstance += " 기명 피보험자(차주)의 명시적/묵시적 동의나 허락 없이 친족이나 지인이 차량을 일시적으로 무단 운행하다 사고를 야기했습니다.";
+  }
+  if (document.getElementById('simTheft').checked) {
+    extraCircumstance += " 제3자가 차량을 절취하여 불법으로 운행하던 절취운전 도중 사고가 발생하여 차주의 운행지배와 운행이익이 완전히 상실된 상태입니다.";
+  }
+  if (document.getElementById('simDriverLimit').checked) {
+    extraCircumstance += " 피보험 차량에 가입된 한정 특약의 연령 한정 또는 가족 한정 운전자 범위 제한을 위반한 운전자가 주행하던 중 사고를 냈습니다.";
+  }
+
+  // 진술서 영역 업데이트
+  document.getElementById('simStatement').value = collisionText + contractText;
+  document.getElementById('simExtra').value = extraCircumstance.trim() || "특이 면책 요건 사정 없음 (정상 보상 범주)";
+}
+
+// ── 시뮬레이터 케이스 분석 기동 ──────────────────────
+async function submitSimCase() {
+  const statement = document.getElementById('simStatement').value.trim();
+  if (!statement) { alert('사고내용 진술서가 작성되지 않았습니다.'); return; }
+
+  const insured = document.getElementById('simInsured').value.trim();
+  const driver = document.getElementById('simDriver').value.trim();
+  const relation = document.getElementById('simRelation').value;
+  const rider = document.getElementById('simRider').value;
+
+  // 가입담보 추출
+  const coverages = [];
+  coverages.push("대인배상I (가입)");
+  coverages.push(document.getElementById('covBodily2').checked ? "대인배상II (가입)" : "대인배상II (미가입)");
+  coverages.push(document.getElementById('covProperty').checked ? "대물배상 (가입)" : "대물배상 (미가입)");
+  coverages.push(document.getElementById('covSelf').checked ? "자기신체사고 (가입)" : "자기신체사고 (미가입)");
+  coverages.push(document.getElementById('covCar').checked ? "자기차량손해 (가입)" : "자기차량손해 (미가입)");
+  coverages.push(document.getElementById('covUninsured').checked ? "무보험차상해 (가입)" : "무보험차상해 (미가입)");
+
+  // 메타데이터 프리픽스 조립
+  const metaPrefix = 
+    `[가입 및 계약 정보]\n` +
+    `- 기명피보험자: ${insured}\n` +
+    `- 실제 운전자: ${driver}\n` +
+    `- 피보험자와의 관계: ${relation}\n` +
+    `- 가입 운전자 특약: ${rider}\n` +
+    `- 가입 담보 상태: ${coverages.join(', ')}\n\n` +
+    `[사고 접수 진술]\n`;
+
+  const fullInput = metaPrefix + statement;
+  const extraData = document.getElementById('simExtra').value;
+  const dispatch = document.querySelector('input[name="simDispatch"]:checked').value;
+  const dispatchText = dispatch === 'O' ? ' [현장출동 요청됨]' : ' [현장출동 없음]';
+
+  showLoading('멀티 에이전트 가상 시뮬레이션 기동 중...');
+
+  // 수동 트리거 수집
+  const triggers = [];
+  if (document.getElementById('simDui').checked) triggers.push("음주운전");
+  if (document.getElementById('simUnlicensed').checked) triggers.push("무면허운전");
+  if (document.getElementById('simDrug').checked) triggers.push("마약약물운전");
+  if (document.getElementById('simHitRun').checked) triggers.push("조치의무위반");
+  if (document.getElementById('simIntentional').checked) triggers.push("고의");
+  if (document.getElementById('simCommercial').checked) triggers.push("유상운송");
+  if (document.getElementById('simFraud').checked) triggers.push("사기횡령");
+  if (document.getElementById('simDisclosure').checked) triggers.push("고지의무");
+  if (document.getElementById('simFamilyVictim').checked) triggers.push("가족피해");
+  if (document.getElementById('simUnauthorized').checked) triggers.push("무단운전");
+  if (document.getElementById('simTheft').checked) triggers.push("절취운전");
+  if (document.getElementById('simDriverLimit').checked) triggers.push("운전자범위");
+
+  // 관계 및 특약에 기반한 운전자 범위 / 가족배제 수동 트리거 판정
+  let isDriverBreach = false;
+  if (relation === '타인' && (rider === '가족한정' || rider === '부부한정' || rider === '기명피보험자1인')) isDriverBreach = true;
+  else if (relation === '가족(기타)' && (rider === '부부한정' || rider === '기명피보험자1인')) isDriverBreach = true;
+  else if (relation === '자녀' && (rider === '부부한정' || rider === '기명피보험자1인')) isDriverBreach = true;
+  else if (relation === '부모' && (rider === '부부한정' || rider === '기명피보험자1인')) isDriverBreach = true;
+  else if (relation === '배우자' && rider === '기명피보험자1인') isDriverBreach = true;
+
+  if (isDriverBreach && !triggers.includes("운전자범위")) triggers.push("운전자범위");
+  if ((relation === '배우자' || relation === '자녀' || relation === '부모') && !triggers.includes("가족피해")) triggers.push("가족피해");
+
+  const fd = new FormData();
+  fd.append('user_input', fullInput + dispatchText);
+  fd.append('video_url', document.getElementById('simVideoUrl').value);
+  fd.append('extra_data', extraData);
+  fd.append('manual_triggers', triggers.join(','));
+
+  for (const f of document.getElementById('simMediaFiles').files) fd.append('files', f);
+
+  try {
+    const res = await fetch(`${API}/api/cases`, { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      hideLoading();
+      alert('오류 발생: ' + (err.detail || res.statusText));
+      return;
+    }
+    const result = await res.json();
+    hideLoading();
+    currentCaseId = result.case_id;
+    await loadCases();
+    renderWorkflowCanvas(result);
+  } catch (e) {
+    hideLoading();
+    alert('시뮬레이션 전송 중 장애: ' + e.message);
+  }
+}
+
+// ── 시나리오 템플릿 로딩 함수 ────────────────────────
 async function submitCase() {
   const userInput = document.getElementById('userInput').value.trim();
-  if (!userInput) { alert('접수 내용을 입력하세요.'); return; }
+  if (!userInput) { alert('접수 내용을 입력해 주십시오.'); return; }
 
   const dispatch = document.querySelector('input[name="dispatch"]:checked').value;
-  const dispatchText = dispatch === 'O' ? ' 현장출동 요청함.' : ' 현장출동 없음.';
+  const dispatchText = dispatch === 'O' ? ' [현장출동 요청됨]' : ' [현장출동 없음]';
   const fullInput = userInput + dispatchText;
 
-  showLoading('AI 분석 중... (10~30초 소요)');
+  showLoading('멀티 에이전트 AI 심사 기동 중...');
 
   const fd = new FormData();
   fd.append('user_input', fullInput);
   fd.append('video_url',  document.getElementById('videoUrl').value);
   fd.append('extra_data', document.getElementById('extraData').value);
+  
+  // 수동 트리거 수집
+  const triggers = [];
+  document.querySelectorAll('input[name="manual_trigger"]:checked').forEach(cb => {
+    triggers.push(cb.value);
+  });
+  fd.append('manual_triggers', triggers.join(','));
+  
   for (const f of document.getElementById('mediaFiles').files) fd.append('files', f);
 
   try {
@@ -423,35 +1865,642 @@ async function submitCase() {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
       hideLoading();
-      alert('오류: ' + (err.detail || res.statusText));
+      alert('오류 발생: ' + (err.detail || res.statusText));
       return;
     }
     const result = await res.json();
     hideLoading();
-    await loadCases();
     currentCaseId = result.case_id;
-    renderResult(result);
+    await loadCases();
+    renderWorkflowCanvas(result);
   } catch(e) {
     hideLoading();
-    alert('오류: ' + e.message);
+    alert('전송 중 장애 발생: ' + e.message);
   }
 }
 
-// ── 사건 상세 로드 ──────────────────────────────────
-async function loadCase(caseId) {
-  currentCaseId = caseId;
-  const res    = await fetch(`${API}/api/cases/${caseId}`);
-  const result = await res.json();
-  await loadCases();
-  renderResult(result);
+function loadScenarioTemplate() {
+  const val = document.getElementById('scenarioSelect').value;
+  if (!val || !SCENARIOS[val]) return;
+  const s = SCENARIOS[val];
+
+  document.getElementById('userInput').value = s.userInput;
+  document.getElementById('videoUrl').value = s.videoUrl;
+  document.getElementById('extraData').value = s.extraData;
+
+  // 현장 출동 라디오버튼 셋업
+  document.querySelectorAll('input[name="dispatch"]').forEach(r => {
+    r.checked = (r.value === s.dispatch);
+  });
+
+  // 수동 트리거 체크박스 셋업
+  document.querySelectorAll('input[name="manual_trigger"]').forEach(cb => {
+    cb.checked = s.triggers.includes(cb.value);
+  });
+
+  // 로드 완료 알림
+  document.getElementById('detailTitle').textContent = '시나리오 로드 완료';
+  document.getElementById('detailSubTitle').textContent = s.title;
+  document.getElementById('detailContent').innerHTML = `
+    <div class="form-card" style="border-color:var(--hi-navy-b);background:var(--hi-navy-tint)">
+      <h4 style="font-weight:800;color:var(--hi-navy);margin-bottom:6px">📢 선택된 시나리오 세부 요약</h4>
+      <p style="font-size:12px;line-height:1.6;color:var(--hi-navy-ink)">
+        이 시나리오는 <b>${s.title}</b> 건에 대조되는 가상 진술과 면책 정황을 자동으로 채운 것입니다.
+        <br><br>
+        하단의 <b>[멀티 에이전트 분석 기동]</b> 버튼을 누르면 AI가 실시간으로 약관 파일(${s.triggers.join(', ') || '사고유형'}) 및 관련 판례 DB를 벡터 검색하여 최적의 부책/면책 검토 의견을 수립합니다.
+      </p>
+    </div>
+  `;
 }
 
-// ── 추가자료 제출 ───────────────────────────────────
+// ── 단일 사건 로드 ──────────────────────────────────
+async function loadCase(caseId) {
+  currentCaseId = caseId;
+  showLoading('사건 정보 및 에이전트 상태 복구 중...');
+  try {
+    const res = await fetch(`${API}/api/cases/${caseId}`);
+    const result = await res.json();
+    hideLoading();
+    await loadCases();
+    renderWorkflowCanvas(result);
+  } catch (e) {
+    hideLoading();
+    alert('데이터 복구 중 오류: ' + e.message);
+  }
+}
+
+// ── 워크플로우 캔버스 상태 복구 및 렌더링 ───────────
+// ── 워크플로우 캔버스 상태 복구 및 렌더링 ───────────
+function renderWorkflowCanvas(r) {
+  currentCaseData = r;
+
+  // 디테일 탭 보이기 및 종합 보고서 탭 활성화
+  document.getElementById('detailTabs').style.display = 'flex';
+
+  // 1. Trigger 노드에 표시할 사고 요약문 파싱
+  const norm = r.normalized || {};
+  const txtSummary = r.normalized?.text_summary || r.user_input || '';
+  const displaySummary = txtSummary.length > 80 ? txtSummary.substring(0, 80) + '...' : txtSummary;
+
+  // 2. Fact Check 노드에 표시할 사고 유형 및 출동여부
+  const factAccidentType = norm.accident_type || '판독 대기';
+  const factDispatch = norm.dispatch_yn === 'O' ? '🚨 출동' : '자가처리';
+
+  // 3. Data Collect 노드 상태 정보
+  let datacollectInfo = '';
+  if (r.final_status === '추가자료 대기 중') {
+    const missingItem = r.extra_request?.request_items?.[0]?.item || '보완자료';
+    datacollectInfo = `
+      <div style="font-size:10px; margin-top:8px; padding:4px 6px; border-radius:4px; font-weight:700; background:#fff7ed; border:1px solid var(--hi-orange-b); color:var(--hi-orange-d);">
+        ⏳ 자료 요청: ${missingItem}
+      </div>`;
+  } else {
+    datacollectInfo = `
+      <div style="font-size:10px; margin-top:8px; padding:4px 6px; border-radius:4px; font-weight:700; background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a;">
+        ✅ 필수 증빙 확보 완료
+      </div>`;
+  }
+
+  // 4. Policy Check 노드 정보
+  const triggersList = r.triggers || [];
+  const liabilityVerdict = r.liability?.liability || '검토 중';
+  const policyInfo = `
+    <div style="font-size:10px; margin-top:8px; padding:4px 6px; border-radius:4px; background:var(--hi-navy-tint); color:var(--hi-navy-ink); font-weight:normal; line-height:1.4;">
+      감지: <strong style="${triggersList.length ? 'color:#ef4444;' : ''}">${triggersList.length ? triggersList.join(', ') : '없음'}</strong><br>
+      결과: <strong>${liabilityVerdict}</strong>
+    </div>`;
+
+  // 5. Fault Ratio 노드 정보
+  const faultRatio = r.liability?.과실비율 || '대기';
+  const faultInfo = `
+    <div style="font-size:10px; margin-top:8px; padding:4px 6px; border-radius:4px; background:var(--hi-navy-tint); color:var(--hi-navy-ink); font-weight:normal;">
+      과실: <strong style="color:var(--hi-orange-d);">${faultRatio}</strong>
+    </div>`;
+
+  // 6. Calc 노드 정보
+  const calcInfo = `
+    <div style="font-size:9px; margin-top:8px; padding:4px 6px; border-radius:4px; background:var(--hi-navy-tint); color:var(--hi-navy-ink); font-weight:normal; line-height:1.3; text-align:left;">
+      대인I: <strong>${r.liability?.담보별판단?.['대인배상I'] || '-'}</strong> | II: <strong>${r.liability?.담보별판단?.['대인배상II'] || '-'}</strong><br>
+      대물: <strong>${r.liability?.담보별판단?.['대물배상'] || '-'}</strong> | 자손: <strong>${r.liability?.담보별판단?.['자기신체사고'] || '-'}</strong>
+    </div>`;
+
+  // 메인 화면을 다이어그램 구조로 리셋
+  document.getElementById('mainArea').innerHTML = `
+    <div class="canvas-inner" id="canvasWorkflow">
+      
+      <!-- Trigger -->
+      <div class="trigger-box" id="node-trigger" style="border: 2px solid var(--hi-navy); box-shadow: 0 4px 14px rgba(0,32,91,0.08);">
+        <div class="t-label">TRIGGER</div>
+        <div class="t-title" style="font-size:16px; font-weight:800; color:var(--hi-navy);">🚗 사고 접수 완료 (${r.case_id})</div>
+        <div class="t-sub" style="font-weight:normal; margin-top:6px; font-size:11px; max-width:550px; margin-left:auto; margin-right:auto; color:var(--hi-navy-ink); opacity:0.9; line-height:1.4; border: 1.5px dashed var(--hi-navy-line); padding: 8px 12px; border-radius:8px; background:#fafafa;">
+          ${displaySummary}
+        </div>
+      </div>
+
+      <div class="arrow-down">
+        <svg width="14" height="20" viewBox="0 0 14 20"><line x1="7" y1="0" x2="7" y2="14" stroke="var(--hi-navy-b)" stroke-width="2"/><polyline points="3,9 7,15 11,9" stroke="var(--hi-navy-b)" stroke-width="2" fill="none"/></svg>
+      </div>
+
+      <!-- Phase 1 -->
+      <div class="phase-header">
+        <div class="phase-num">1</div>
+        <div class="phase-title">자료수집 &amp; 사실관계 확정</div>
+        <div class="phase-line"></div>
+      </div>
+
+      <div class="agent-grid">
+        <!-- 사실확인 Agent -->
+        <div class="agent-card" id="card-overview" onclick="selectAgentCard('overview')">
+          <div class="figma-img-placeholder">🔍 FACT</div>
+          <div class="card-name">사실확인 Agent</div>
+          <div class="card-category">VLM · Overview</div>
+          <div class="card-desc">진술 분석, 사진 판독, 사고 기본 개요 확정</div>
+          <div style="font-size:10px; margin-top:8px; padding:4px 6px; border-radius:4px; background:var(--hi-navy-tint); color:var(--hi-navy-ink); font-weight:normal; display:flex; justify-content:space-between;">
+            <span>유형: <strong>${factAccidentType}</strong></span>
+            <span><strong>${factDispatch}</strong></span>
+          </div>
+        </div>
+
+        <!-- 자료수집 Agent -->
+        <div class="agent-card" id="card-datacollect" onclick="selectAgentCard('datacollect')">
+          <div class="figma-img-placeholder">📋 COLLECT</div>
+          <div class="card-name">자료수집 Agent</div>
+          <div class="card-category">Communication</div>
+          <div class="card-desc">현장 출동 및 블랙박스 누락자료 추가 수집</div>
+          ${datacollectInfo}
+        </div>
+      </div>
+
+      <div class="arrow-down">
+        <svg width="14" height="20" viewBox="0 0 14 20"><line x1="7" y1="0" x2="7" y2="14" stroke="var(--hi-navy-b)" stroke-width="2"/><polyline points="3,9 7,15 11,9" stroke="var(--hi-navy-b)" stroke-width="2" fill="none"/></svg>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="phase-header">
+        <div class="phase-num">2</div>
+        <div class="phase-title">면부책 검증 및 과실 판결 RAG</div>
+        <div class="phase-line"></div>
+      </div>
+
+      <div class="interact-wrapper" style="box-shadow: 0 4px 10px rgba(0,32,91,0.03);">
+        <div class="interact-card-area">
+          <!-- 면부책 Agent -->
+          <div class="agent-card" id="card-policy" onclick="selectAgentCard('policy')">
+            <div class="figma-img-placeholder">📜 POLICY</div>
+            <div class="card-name">면부책 Agent</div>
+            <div class="card-category">Liability Check</div>
+            <div class="card-desc">의무면책 및 인적 요건(가족 관계 등) 약관 대조 검증</div>
+            ${policyInfo}
+          </div>
+        </div>
+
+        <div class="interact-bridge">
+          <div class="interact-bridge-label" style="font-weight:700; color:var(--hi-navy);">RAG 연계</div>
+          <svg width="40" height="12" viewBox="0 0 40 12" fill="none">
+            <line x1="0" y1="6" x2="36" y2="6" stroke="var(--hi-navy)" stroke-width="1.5" />
+            <polyline points="32,2 36,6 32,10" stroke="var(--hi-navy)" stroke-width="1.5" fill="none"/>
+          </svg>
+        </div>
+
+        <div class="interact-infra-area">
+          <div class="infra-mini-card" onclick="selectAgentCard('search')" style="cursor:pointer; transition:all 0.2s;">
+            <div class="infra-mini-icon">🔎</div>
+            <div class="infra-mini-name">검색 RAG Agent</div>
+          </div>
+          <div class="infra-mini-card" onclick="selectAgentCard('law')" style="cursor:pointer; transition:all 0.2s;">
+            <div class="infra-mini-icon">⚖️</div>
+            <div class="infra-mini-name">법률 판례 Agent</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 면부책 검토 분기 다이어그램 -->
+      <div class="branch-wrapper" style="box-shadow: 0 4px 12px rgba(0,32,91,0.04);">
+        <div class="branch-header">
+          <div class="branch-title" id="branchStatus">면부책 검증</div>
+          <div class="branch-desc">판단된 보상유형에 따라 분기 진행</div>
+        </div>
+        <div class="agent-grid">
+          <!-- 과실판단 Agent -->
+          <div class="agent-card" id="card-fault" onclick="selectAgentCard('fault')">
+            <div class="figma-img-placeholder">⚠️ FAULT</div>
+            <div class="card-name">과실판단 Agent</div>
+            <div class="card-category">Fault Ratio</div>
+            <div class="card-desc">사고유형 도표 대조 및 판례 적용 수정요소 확정</div>
+            ${faultInfo}
+          </div>
+          
+          <!-- 보험금 산정 Agent -->
+          <div class="agent-card" id="card-calculation" onclick="selectAgentCard('calculation')">
+            <div class="figma-img-placeholder">💰 CALC</div>
+            <div class="card-name">보험금 산정 Agent</div>
+            <div class="card-category">Orchestration</div>
+            <div class="card-desc">과실비율 및 담보별 지급여부 적용 최종 산출</div>
+            ${calcInfo}
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-down">
+        <svg width="14" height="20" viewBox="0 0 14 20"><line x1="7" y1="0" x2="7" y2="14" stroke="var(--hi-navy-b)" stroke-width="2"/><polyline points="3,9 7,15 11,9" stroke="var(--hi-navy-b)" stroke-width="2" fill="none"/></svg>
+      </div>
+
+      <!-- 종결 -->
+      <div style="display:flex; gap:12px;">
+        <div class="trigger-box complete" style="flex:1; opacity:0.3; transition: all 0.3s;" id="node-complete">
+          <div class="t-label green">COMPLETE</div>
+          <div class="t-title" style="color:#16a34a; font-weight:800;">💰 최종 보상금 지급</div>
+          <div class="t-sub">사고 종결 및 합의 완료</div>
+        </div>
+        <div class="trigger-box exempt" style="flex:1; opacity:0.3; transition: all 0.3s;" id="node-exempt">
+          <div class="t-label yellow">COMPLETE</div>
+          <div class="t-title" style="color:var(--hi-orange-d); font-weight:800;">🚫 면책(미지급) 종결</div>
+          <div class="t-sub">면책 통보 및 사건 종결</div>
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  const isDone = r.final_status === '완료';
+  const isWait = r.final_status === '추가자료 대기 중';
+  const isReview = r.final_status === '면책 검토 대기';
+
+  if (isDone || isReview) {
+    document.getElementById('card-overview').classList.add('done-flow');
+    document.getElementById('card-datacollect').classList.add('done-flow');
+  } else if (isWait) {
+    document.getElementById('card-overview').classList.add('active-flow');
+    document.getElementById('card-datacollect').classList.add('active-flow');
+  }
+
+  if (isDone) {
+    document.getElementById('card-policy').classList.add('done-flow');
+    document.getElementById('card-fault').classList.add('done-flow');
+    document.getElementById('card-calculation').classList.add('done-flow');
+    
+    const isExempt = (r.liability || {}).liability === '면책(미지급)' || (r.liability || {}).liability === '부책(일부 담보 면책)';
+    if (isExempt) {
+      document.getElementById('node-exempt').style.opacity = '1';
+      document.getElementById('node-exempt').style.boxShadow = '0 6px 20px rgba(217, 126, 0, 0.15)';
+      document.getElementById('node-exempt').style.transform = 'scale(1.02)';
+      document.getElementById('branchStatus').textContent = '면부책 검증 (면책)';
+      document.getElementById('branchStatus').style.background = '#ef4444';
+    } else {
+      document.getElementById('node-complete').style.opacity = '1';
+      document.getElementById('node-complete').style.boxShadow = '0 6px 20px rgba(22, 163, 74, 0.15)';
+      document.getElementById('node-complete').style.transform = 'scale(1.02)';
+      document.getElementById('branchStatus').textContent = '면부책 검증 (부책)';
+      document.getElementById('branchStatus').style.background = '#16a34a';
+    }
+  } else if (isReview) {
+    document.getElementById('card-policy').classList.add('active-flow');
+  }
+
+  // 기본적으로 전체 심사 결과 종합 보고서 탭을 보여줍니다.
+  switchDetailTab('report');
+}
+
+// ── 에이전트 선택 시 상세 패널 로드 ───────────────────
+function selectAgentCard(agentId) {
+  if (!currentCaseData) return;
+  activeAgentId = agentId;
+  resetAgentCardHighlights();
+
+  const card = document.getElementById(`card-${agentId}`);
+  if (card) card.style.borderWidth = '3px';
+  
+  // 에이전트 상세 탭 활성화 후 상세정보 렌더링
+  document.getElementById('tabReportBtn').className = 'reset-btn';
+  document.getElementById('tabAgentBtn').className = 'reset-btn active-tab';
+  currentDetailTab = 'agent';
+  
+  showAgentDetails(agentId);
+}
+
+// ── 에이전트 상세 렌더링 실제 로직 ────────────────────
+function showAgentDetails(agentId) {
+  if (!currentCaseData) return;
+  const r = currentCaseData;
+  const norm = r.normalized || {};
+  const fact = r.fact || {};
+  const liability = r.liability || {};
+  const extra_req = r.extra_request;
+  const surcharge = liability['사고부담금'] || {};
+  const coverage = liability['담보별판단'] || {};
+  const triggers = r.triggers || [];
+  const clauses = r.clause_hits || [];
+  const verdicts = r.verdict_hits || [];
+
+  const titleEl = document.getElementById('detailTitle');
+  const subtitleEl = document.getElementById('detailSubTitle');
+  const contentEl = document.getElementById('detailContent');
+
+  if (agentId === 'overview') {
+    titleEl.textContent = '사실확인 Agent';
+    subtitleEl.textContent = 'Overview · 진술 분석 및 정보 확정';
+    
+    const mediaHTML = (r.image_urls || []).length 
+      ? `<div style="margin-top:14px">
+           <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:8px">📷 분석 대상 사진</div>
+           <div style="display:flex;flex-wrap:wrap;gap:8px">
+             ${(r.image_urls).map(url => `<img src="${url}" onclick="openImage('${url}')" style="width:90px;height:65px;object-fit:cover;border-radius:6px;border:1.5px solid var(--hi-navy-line);cursor:zoom-in">`).join('')}
+           </div>
+         </div>`
+      : '';
+
+    const videoHTML = norm.video_url
+      ? `<div style="margin-top:14px;padding:12px;background:var(--hi-orange-soft);border:1px solid var(--hi-orange-b);border-radius:8px">
+           🎥 <strong>블랙박스 비디오 링크</strong><br>
+           <a href="${norm.video_url}" target="_blank" style="color:var(--hi-navy-2);word-break:break-all;font-size:12px;font-weight:700">${norm.video_url}</a>
+         </div>`
+      : '';
+
+    contentEl.innerHTML = `
+      <div class="chat-container">
+        <div class="bubble bubble-agent">사고 진술 접수 결과를 분석하여 핵심 사실관계를 추출했습니다.</div>
+        <div class="bubble bubble-user">${r.user_input || norm.text_summary || ''}</div>
+        <div class="bubble bubble-system">사고유형 분류: <b>${norm.accident_type || '판독 중'}</b></div>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--hi-navy)">현장 출동 지시</div>
+        <div style="margin-top:4px">
+          ${norm.dispatch_yn === 'O' 
+            ? '<span class="badge badge-review">🚨 긴급 현장 출동 요청됨</span>' 
+            : '<span class="badge badge-done">현장 자가 처리 (출동 없음)</span>'}
+        </div>
+      </div>
+      ${videoHTML}
+      ${mediaHTML}
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--hi-line)">
+        <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:6px">사실관계 요약 결과</div>
+        <div style="background:var(--hi-page);padding:12px;border-radius:8px;font-size:12px;line-height:1.6">
+          ${fact.fact_summary || '사실확정 처리 대기 중'}
+        </div>
+      </div>
+    `;
+  }
+
+  else if (agentId === 'datacollect') {
+    titleEl.textContent = '자료수집 Agent';
+    subtitleEl.textContent = 'Data Collection · 미확인 요건 수집 및 피드백';
+
+    const items = extra_req ? (extra_req.request_items || []) : [];
+    const history = r.extra_history || [];
+    
+    let historyHTML = '';
+    if (history.length) {
+      historyHTML = `
+        <div style="margin-top:16px;border-top:1.5px dashed var(--hi-navy-line);padding-top:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:6px">📥 제출된 증빙 히스토리</div>
+          ${history.map((h, i) => `
+            <div style="padding:10px;background:var(--hi-page);border:1px solid var(--hi-navy-line);border-radius:8px;margin-bottom:6px;font-size:12px">
+              <div style="color:var(--hi-muted);font-size:10px;margin-bottom:3px">${i+1}차 보완 · ${h.timestamp}</div>
+              <div style="color:var(--hi-navy-ink);line-height:1.5">${h.extra_data}</div>
+            </div>
+          `).join('')}
+        </div>`;
+    }
+
+    let templates = [];
+    const accType = norm.accident_type || '';
+    if (accType.includes('좌회전')) {
+      templates = [
+        '블랙박스 확인 결과 상대 직진 차량이 규정 속도를 초과하여 과속 주행함이 판독되었습니다.',
+        '블랙박스 확인 결과 상대 직진 차량이 적색 신호에 위반하여 교차로에 진입한 것이 확인됩니다.'
+      ];
+    } else if (accType.includes('후진')) {
+      templates = [
+        '블랙박스 판독 결과 양 차량이 주차장 통로 내에서 동시에 후진 중 충돌한 쌍방 사고임이 입증됩니다.',
+        '블랙박스 확인 결과 내 차량이 완전히 정차해 있는 상태에서 상대 차량만 후진하여 추돌하였습니다.'
+      ];
+    } else {
+      templates = [
+        '블랙박스 영상을 분석한 결과, 최초 신고 접수된 피해 진술 상황이 모두 정확한 사실로 대조되었습니다.',
+        '현장 사진 판독 결과 범퍼 및 휀더 부위의 손상 방향이 충돌 진술과 일치합니다.'
+      ];
+    }
+
+    const templatesHTML = templates.map(t => `
+      <button type="button" class="reset-btn" style="text-align:left;padding:6px 8px;font-size:11px;font-weight:normal;width:100%;margin-bottom:4px;border-color:var(--hi-navy-b)" onclick="document.getElementById('extraInput').value = '${t}'">
+        📝 ${t.substring(0, 30)}...
+      </button>
+    `).join('');
+
+    let inputAreaHTML = '';
+    if (r.final_status === '추가자료 대기 중') {
+      inputAreaHTML = `
+        <div style="margin-top:16px;border-top:1.5px solid var(--hi-navy-line);padding-top:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:8px">📤 판독/추가 사실 증빙 제출</div>
+          <textarea id="extraInput" rows="3" style="font-size:12px;margin-bottom:8px" placeholder="AI가 요청한 항목에 대한 판독 사실이나 기록을 입력하십시오."></textarea>
+          
+          <div style="font-size:11px;color:var(--hi-soft);font-weight:700;margin-bottom:4px">⚡ 템플릿으로 빠른 입력</div>
+          <div style="margin-bottom:10px">${templatesHTML}</div>
+          
+          <div style="margin-bottom:10px">
+            <label style="font-size:11px;font-weight:700;color:var(--hi-soft);display:block;margin-bottom:3px">사진 첨부 (선택)</label>
+            <input type="file" id="extraFiles" multiple accept="image/*" style="font-size:12px;width:100%">
+          </div>
+          <button class="btn-submit" onclick="submitExtra('${r.case_id}')">보완 데이터 송신</button>
+        </div>`;
+    }
+
+    contentEl.innerHTML = `
+      <div class="chat-container">
+        <div class="bubble bubble-agent">진술 신뢰도를 충족하기 위해 추가 보완 판독 사실이나 증빙 자료가 필요합니다.</div>
+        ${items.length 
+          ? `<div class="bubble bubble-system" style="background:#fff7ed;color:var(--hi-orange-d);border:1px solid var(--hi-orange-b)">
+               <b>요청 필요 정보:</b><br>
+               ${items.map((it, idx) => `${idx+1}. ${it.item} - ${it.reason}`).join('<br>')}
+             </div>`
+          : '<div class="bubble bubble-system">현재 상태에서는 추가 요청 자료가 없습니다.</div>'}
+      </div>
+      ${historyHTML}
+      ${inputAreaHTML}
+    `;
+  }
+
+  else if (agentId === 'policy') {
+    titleEl.textContent = '면부책 Agent';
+    subtitleEl.textContent = 'Liability · 약관 대조 검증 및 의무 체크';
+
+    if (r.final_status === '면책 검토 대기') {
+      const checkboxItems = [
+        { val: '고의', label: '🟢 고의 사고 정황 있음 (면책)' },
+        { val: '가족피해', label: '🟡 피해자가 피보험자의 직계 가족 (특약 전환 필요)' },
+        { val: '음주운전', label: '음주운전 혐의 (사고부담금 부과)' },
+        { val: '무면허운전', label: '무면허운전 혐의 (사고부담금 부과)' },
+        { val: '조치의무위반', label: '뺑소니/조치의무위반 (사고부담금)' },
+        { val: '운전자범위', label: '운전자 한정 특약 위반 (면책)' }
+      ];
+
+      const checkBoxesHTML = checkboxItems.map(item => {
+        const checked = triggers.includes(item.val) ? 'checked' : '';
+        return `
+          <label style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--hi-line);cursor:pointer;font-size:12px;font-weight:normal">
+            <input type="checkbox" name="review_trigger" value="${item.val}" ${checked} style="width:16px;height:16px">
+            ${item.label}
+          </label>`;
+      }).join('');
+
+      contentEl.innerHTML = `
+        <div class="chat-container">
+          <div class="bubble bubble-agent">사실확정이 끝났으나 약관상 면책 정황(의무 위반 등)이 감지되었습니다. 담당자 승인이 필요합니다.</div>
+          <div class="bubble bubble-system" style="background:#fee2e2;color:#ef4444;border-color:#fca5a5">
+            <b>감지된 트리거 요건:</b> ${triggers.length ? triggers.join(', ') : '없음'}
+          </div>
+        </div>
+        <div style="margin-top:16px;background:#ffffff;border:1px solid var(--hi-navy-b);border-radius:10px;padding:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:8px">보상담당자 최종 적용 면책 항목 선택</div>
+          ${checkBoxesHTML}
+        </div>
+        <button class="btn-submit" onclick="confirmTriggers('${r.case_id}')" style="margin-top:14px;background:#ef4444">⚖️ 면책 및 인적 트리거 확정</button>
+      `;
+    } else {
+      const coverageRows = Object.entries(coverage).map(([k,v]) =>
+        `<tr><td>${k}</td><td style="color:${v==='면책'?'#ef4444':'#16a34a'};font-weight:700">${v}</td></tr>`
+      ).join('');
+
+      contentEl.innerHTML = `
+        <div class="chat-container">
+          <div class="bubble bubble-agent">면부책 검증이 완료되었습니다.</div>
+          <div class="bubble bubble-system">최종 판단 결과: <b>${liability.liability || '미판단'}</b></div>
+        </div>
+        <div style="margin-top:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:6px">담보별 보상 판단 결과</div>
+          <table class="mini-table">
+            <thead>
+              <tr><th>담보 종류</th><th>보상 책임 여부</th></tr>
+            </thead>
+            <tbody>
+              ${coverageRows || '<tr><td colspan="2">분석 데이터 없음</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+  }
+
+  else if (agentId === 'fault') {
+    titleEl.textContent = '과실판단 Agent';
+    subtitleEl.textContent = 'Fault Ratio · 과실도표 및 판례 수정요소 산출';
+
+    const modifiers = (liability['수정요소적용'] || []).map(m => `<div style="font-size:12px;color:var(--hi-soft);margin-top:4px">• ${m}</div>`).join('');
+
+    contentEl.innerHTML = `
+      <div class="chat-container">
+        <div class="bubble bubble-agent">사고 도표 표준 분류 및 관련 법원 판례 RAG 검색을 통해 양 차량의 과실 비율을 심사했습니다.</div>
+        <div class="bubble bubble-system" style="background:var(--hi-orange-soft);color:var(--hi-orange-d);border-color:var(--hi-orange-b)">
+          <b>최종 과실 비율 산출: ${liability['과실비율'] || '해당 없음'}</b>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--hi-navy)">수정요소 및 특별 사정</div>
+        ${modifiers || '<div style="font-size:12px;color:var(--hi-muted);margin-top:4px">수정 적용 요소 없음</div>'}
+      </div>
+      <div style="margin-top:16px;border-top:1px solid var(--hi-line);padding-top:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:8px">검색 매칭 판결례 요지</div>
+        ${verdicts.slice(0, 2).map(v => `
+          <div style="background:var(--hi-page);border:1px solid var(--hi-navy-line);border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px">
+            <strong style="color:var(--hi-navy-2)">${v.case_num} (${v.court})</strong>
+            ${v.score !== undefined ? `<span style="color:#d97e00;font-weight:700;font-size:10px;margin-left:6px">(유사도: ${(v.score * 100).toFixed(1)}%)</span>` : ''}<br>
+            <span style="color:var(--hi-soft);display:inline-block;margin-top:3px">${v.summary ? v.summary.substring(0, 180)+'...' : '판결요지 생략'}</span>
+          </div>
+        `).join('') || '<div style="color:var(--hi-muted)">연동된 법률 판례가 없습니다.</div>'}
+      </div>
+    `;
+  }
+
+  else if (agentId === 'calculation') {
+    titleEl.textContent = '보험금 산정 Agent';
+    subtitleEl.textContent = 'Calculation · 최종 지급 보험금 약관 기반 집계';
+
+    const surchargeRows = Object.entries(surcharge).map(([k, v]) => `
+      <tr>
+        <td style="font-weight:700">${k}</td>
+        <td style="color:#ef4444;font-weight:700">${v > 0 ? v + ' 만원' : '없음'}</td>
+      </tr>
+    `).join('');
+
+    contentEl.innerHTML = `
+      <div class="chat-container">
+        <div class="bubble bubble-agent">각 전문 에이전트(의료, 정비)의 보상 한도와 과실비율을 취합하여, 지급 부담금을 산정했습니다.</div>
+        <div class="bubble bubble-system">
+          보상 유형: <b>${liability['분기'] || '대인/대물 지급'}</b>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:6px">의무 사고부담금 부과 금액</div>
+        <table class="mini-table">
+          <thead>
+            <tr><th>구분</th><th>부과액</th></tr>
+          </thead>
+          <tbody>
+            ${surchargeRows || '<tr><td colspan="2">사고부담금 면제 대상</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px;background:var(--hi-navy-tint);padding:14px;border-radius:10px;border:1.5px solid var(--hi-navy-b)">
+        <div style="font-size:13px;font-weight:800;color:var(--hi-navy)">심사 종결 의견</div>
+        <div style="font-size:12px;color:var(--hi-navy-ink);line-height:1.6;margin-top:6px">
+          본 사고는 <b>${norm.accident_type || '해당 건'}</b> 사건으로, 보상책임여부 <b>${liability.liability}</b>이며 최종 과실 <b>${liability['과실비율'] || '0%'}</b>를 대조 적용하여 정상 지급 승인되었습니다.
+        </div>
+      </div>
+    `;
+  }
+
+  else if (agentId === 'search') {
+    titleEl.textContent = '검색 RAG Agent';
+    subtitleEl.textContent = 'Search · 보험 약관 조항 의미 색인 및 유사 검색';
+
+    contentEl.innerHTML = `
+      <div class="chat-container">
+        <div class="bubble bubble-agent">질의하신 사고내용과 부합도가 가장 높은 약관 조항 및 단서를 추출했습니다.</div>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:8px">검색된 표준 보험 약관 조항 (우선순위순)</div>
+        ${clauses.slice(0, 3).map(c => `
+          <details style="border:1px solid var(--hi-navy-line);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:#fff">
+            <summary style="cursor:pointer;font-weight:700;font-size:12px;color:var(--hi-navy-ink)">${c.article} ${c.title} (${c.page}p)</summary>
+            <p style="margin-top:8px;font-size:11px;line-height:1.6;color:var(--hi-soft)">${c.text}</p>
+          </details>
+        `).join('') || '<div style="color:var(--hi-muted)">조회된 약관이 없습니다.</div>'}
+      </div>
+    `;
+  }
+
+  else if (agentId === 'law') {
+    titleEl.textContent = '법률 판례 Agent';
+    subtitleEl.textContent = 'Law · 유사 대법원/지방판례 RAG 대조';
+
+    contentEl.innerHTML = `
+      <div class="chat-container">
+        <div class="bubble bubble-agent">사고 정황 및 과실 쟁점에 부합하는 유사 판결문을 다차원 벡터 대조하였습니다.</div>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--hi-navy);margin-bottom:8px">검색된 법원 판례 요지 (우선순위순)</div>
+        ${verdicts.slice(0, 3).map(v => `
+          <details style="border:1px solid var(--hi-navy-line);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:#fff">
+            <summary style="cursor:pointer;font-weight:700;font-size:12px;color:var(--hi-navy-ink)">
+              ${v.case_num} [${v.court}]
+              ${v.score !== undefined ? `<span style="color:#d97e00;font-weight:700;font-size:10px;margin-left:6px">(유사도: ${(v.score * 100).toFixed(1)}%)</span>` : ''}
+            </summary>
+            <p style="margin-top:8px;font-size:11px;line-height:1.6;color:var(--hi-soft)">
+              <strong>사건:</strong> ${v.issue || '판시사항 정보 없음'}<br><br>
+              <strong>판결요약:</strong> ${v.summary || v.full_text.substring(0, 300) + '...'}
+            </p>
+          </details>
+        `).join('') || '<div style="color:var(--hi-muted)">조회된 판결문이 없습니다.</div>'}
+      </div>
+    `;
+  }
+}
+
 async function submitExtra(caseId) {
   const extra = document.getElementById('extraInput').value.trim();
-  if (!extra) { alert('추가 자료 내용을 입력해야 다음 단계로 진행할 수 있습니다.'); return; }
+  if (!extra) { alert('보완 판독이나 조서 내용을 기입해주십시오.'); return; }
 
-  showLoading('추가 자료 분석 중...');
+  showLoading('보완 데이터 추가 분석 및 RAG 재기동 중...');
 
   const fd = new FormData();
   fd.append('extra_data', extra);
@@ -462,250 +2511,78 @@ async function submitExtra(caseId) {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
       hideLoading();
-      alert('오류: ' + (err.detail || res.statusText));
+      alert('오류 발생: ' + (err.detail || res.statusText));
       return;
     }
     const result = await res.json();
     hideLoading();
+    currentCaseId = result.case_id;
     await loadCases();
-    renderResult(result);
-  } catch(e) {
+    renderWorkflowCanvas(result);
+  } catch (e) {
     hideLoading();
-    alert('오류: ' + e.message);
+    alert('제출 실패: ' + e.message);
   }
 }
 
-// ── 결과 렌더링 ─────────────────────────────────────
-function renderResult(r) {
-  const fact      = r.fact      || {};
-  const liability = r.liability || {};
-  const norm      = r.normalized || {};
-  const extra_req = r.extra_request;
-  const surcharge = liability['사고부담금'] || {};
-  const coverage  = liability['담보별판단'] || {};
-  const triggers  = r.triggers  || [];
-  const clauses   = r.clause_hits || [];
-  const verdicts  = r.verdict_hits || [];
-  const isWait    = r.final_status === '추가자료 대기 중';
-  const isDone    = r.final_status === '완료';
-  const liabilityClass = (liability.liability === '면책(미지급)') ? 'myunchek' : 'buchek';
+// ── 면책 최종 승인/확정 처리 ────────────────────────
+async function confirmTriggers(caseId) {
+  const confirmedTriggers = Array.from(document.querySelectorAll('input[name="review_trigger"]:checked'))
+    .map(cb => cb.value)
+    .join(',');
 
-  // 단계 상태
-  const STEPS = [
-    { id: 0, label: '접수',        state: 'done' },
-    { id: 1, label: '자료수집',    state: isDone || isWait ? 'done' : 'active' },
-    { id: 2, label: '사실확정',    state: isDone ? 'done' : isWait ? 'wait' : 'active' },
-    { id: 3, label: '면부책 판단', state: isDone ? 'active' : '' },
-  ];
+  showLoading('면부책 최종 결과 및 과실 등 전 담보 종결 산정 중...');
 
-  // 현재 활성 단계 계산
-  const activeStep = isDone ? 3 : isWait ? 1 : 1;
+  const fd = new FormData();
+  fd.append('manual_triggers', confirmedTriggers);
 
-  const stepperHTML = '<div class="stepper">' + STEPS.map((s, i) =>
-    `<div class="step ${s.state}" onclick="showPanel(${i})" style="cursor:pointer" title="${s.label} 상세 보기">
-      <div class="step-circle">${s.state === 'done' ? '✓' : i + 1}</div>
-      <div class="step-label">${s.label}</div>
-    </div>`
-  ).join('') + '</div>';
-
-  // 각 단계별 패널 내용
-  const panel0 = `
-    <div class="panel-title">1단계 — 접수</div>
-    <div class="fact-box">${r.user_input || norm.text_summary || ''}</div>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      ${norm.dispatch_yn === 'O'
-        ? '<span class="badge" style="background:#dbeafe;color:#1e40af">🚨 현장출동 요청</span>'
-        : '<span class="badge" style="background:#f3f4f6;color:#6b7280">현장출동 없음</span>'}
-      ${norm.accident_type ? `<span class="tag">${norm.accident_type}</span>` : ''}
-    </div>
-    ${norm.video_url ? `
-    <div style="margin-top:12px;padding:12px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;font-size:0.88rem">
-      🎥 <strong>영상 자료</strong> — 담당자 직접 판독<br>
-      <a href="${norm.video_url}" target="_blank" style="color:#2563eb;word-break:break-all">${norm.video_url}</a>
-    </div>` : ''}
-    ${(r.image_urls||[]).length ? `
-    <div style="margin-top:12px">
-      <div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:8px">📷 제출 사진</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${(r.image_urls||[]).map(url => `
-          <img src="${url}" onclick="openImage('${url}')"
-            style="width:120px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;cursor:zoom-in">`
-        ).join('')}
-      </div>
-    </div>` : ''}`;
-
-  const panel1 = (() => {
-    const items = extra_req ? (extra_req.request_items || []) : [];
-    const isFirst = norm.dispatch_yn === 'X' && (r.retry_count || 0) <= 1;
-    const history = r.extra_history || [];
-    const historyHTML = history.length ? `
-      <div style="margin-top:16px;border-top:1px solid #e5e7eb;padding-top:14px">
-        <div style="font-size:0.85rem;color:#555;font-weight:600;margin-bottom:8px">📬 제출된 자료 히스토리</div>
-        ${history.map((h, i) => `
-          <div style="padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;font-size:0.88rem">
-            <div style="color:#999;font-size:0.78rem;margin-bottom:4px">${i+1}차 제출 · ${h.timestamp}</div>
-            <div style="color:#1a1a2e;line-height:1.6">${h.extra_data}</div>
-          </div>`).join('')}
-      </div>` : '';
-    return `
-    <div class="panel-title">2단계 — 자료수집</div>
-    ${items.length ? `
-      <div style="margin-bottom:12px">
-        <div style="font-size:0.85rem;color:#555;margin-bottom:6px;font-weight:600">
-          ${isFirst ? '📋 1차 요청 항목' : '📨 추가 요청 항목'}
-        </div>
-        <ol style="margin:0 0 0 18px;line-height:2.2;font-size:0.9rem">
-          ${items.map(it => `<li><strong>${it.item}</strong> <span style="color:#666;font-size:0.83rem">— ${it.reason}</span></li>`).join('')}
-        </ol>
-      </div>
-      <div class="fact-box" style="background:#fffbeb;border-color:#fcd34d;font-size:0.88rem;line-height:1.7">
-        ${extra_req.request_msg || ''}
-      </div>` : `<div style="color:#666;font-size:0.9rem">자료수집 내역 없음</div>`}
-    ${historyHTML}
-    ${isWait ? `
-    <div style="margin-top:16px;border-top:1px solid #e5e7eb;padding-top:16px">
-      <div style="font-size:0.85rem;font-weight:600;margin-bottom:8px;color:#1a1a2e">📤 판독 결과 / 추가 확인 사항 입력</div>
-      <textarea id="extraInput" rows="3" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:8px;font-size:0.9rem"
-        placeholder="예) 영상 확인 결과 좌회전 차량이 노란불에 진입함"></textarea>
-      <input type="file" id="extraFiles" multiple accept="image/*"
-        style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:8px;font-size:0.88rem">
-      <button class="btn-submit" onclick="submitExtra('${r.case_id}')">📤 자료 제출</button>
-    </div>` : ''}`;
-  })();
-
-  const panel2 = `
-    <div class="panel-title">3단계 — 사실확정</div>
-    <div style="margin-bottom:10px">
-      <span style="font-size:0.8rem;color:#555;font-weight:600">핵심 쟁점</span>
-      <div style="margin-top:4px;font-size:0.95rem;font-weight:600;color:#1a1a2e">${fact.key_issue || '-'}</div>
-    </div>
-    ${fact.status === '충분' ? `
-      <div class="fact-box" style="border-left:3px solid #22c55e">
-        <span style="font-size:0.8rem;color:#166534;font-weight:600">✓ 사실확정 완료</span><br><br>
-        ${fact.fact_summary || ''}
-        ${fact.confidence ? `<br><br><span style="color:#666;font-size:0.83rem">신뢰도: ${fact.confidence}</span>` : ''}
-      </div>` : `
-      <div class="fact-box" style="border-left:3px solid #f59e0b">
-        <span style="font-size:0.8rem;color:#92400e;font-weight:600">⏳ 자료 보완 필요</span><br><br>
-        ${(fact.unresolved||[]).length ? `미확정: ${fact.unresolved.join(', ')}` : '추가 자료 검토 중'}
-      </div>`}
-    ${(fact.missing_info||[]).length ? `
-    <div style="margin-top:12px">
-      <div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">필요 자료 (우선순위순)</div>
-      ${fact.missing_info.map(m => `
-        <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:0.86rem">
-          <span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;font-size:0.75rem;white-space:nowrap">D:${m.decisiveness}</span>
-          <div><strong>${m.item}</strong><br><span style="color:#666">${m.reason}</span></div>
-        </div>`).join('')}
-    </div>` : ''}`;
-
-  const panel3 = (() => {
-    if (!isDone || !liability.liability) {
-      return '<div class="panel-title">4단계 — 면부책 판단</div>'
-           + '<div style="color:#9ca3af;font-size:0.9rem;padding:20px 0;text-align:center">사실확정 완료 후 진행됩니다</div>';
-    }
-    const coverageRows = Object.entries(coverage).map(([k,v]) =>
-      '<tr><td>' + k + '</td><td class="' + (v==='면책'?'myunchek-cell':'buchek-cell') + '">' + v + '</td></tr>'
-    ).join('');
-    const surchargeRows = (surcharge && Object.values(surcharge).some(v=>v>0))
-      ? '<div style="margin-top:14px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">사고부담금</div>'
-        + '<table class="surcharge-table"><tr><th>담보</th><th>금액</th></tr>'
-        + '<tr><td>대인배상 I</td><td>' + (surcharge['대인I']?surcharge['대인I']+'만원':'-') + '</td></tr>'
-        + '<tr><td>대인배상 II</td><td>' + (surcharge['대인II']?surcharge['대인II']+'만원':'-') + '</td></tr>'
-        + '<tr><td>대물배상</td><td>' + (surcharge['대물']?surcharge['대물']+'만원':'-') + '</td></tr>'
-        + '</table></div>' : '';
-    const triggerTags  = triggers.map(t => '<span class="tag red">' + t + '</span>').join('');
-    const clauseTags   = (liability['약관근거']||[]).map(a => '<span class="tag">' + a + '</span>').join('');
-    const verdictTags  = (liability['판례근거']||[]).map(v => '<span class="tag green">' + v + '</span>').join('');
-    const modifiers    = (liability['수정요소적용']||[]).map(m => '<div style="font-size:0.85rem;color:#444;padding:3px 0">• ' + m + '</div>').join('');
-    const clauseDetails = clauses.slice(0,3).map(c =>
-      '<details style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:6px">'
-      + '<summary style="cursor:pointer;font-weight:600;font-size:0.88rem">' + c.article + ' ' + c.title + ' [' + c.page + 'p]</summary>'
-      + '<p style="margin-top:8px;font-size:0.84rem;line-height:1.6;color:#444">' + c.text.substring(0,400) + '...</p>'
-      + '</details>'
-    ).join('');
-    const verdictDetails = verdicts.slice(0,3).map(v =>
-      '<details style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:6px">'
-      + '<summary style="cursor:pointer;font-weight:600;font-size:0.88rem">' + v.case_num + ' ' + v.court + (v.date?' ('+v.date+')':'') + '</summary>'
-      + '<p style="margin-top:8px;font-size:0.84rem;line-height:1.6;color:#444"><strong>판시:</strong> ' + v.issue.substring(0,200) + '<br><strong>요지:</strong> ' + v.summary.substring(0,300) + '</p>'
-      + '</details>'
-    ).join('');
-
-    return '<div class="panel-title">4단계 — 면부책 판단</div>'
-      + '<div class="liability-card ' + liabilityClass + '" style="margin-bottom:16px">'
-      + '<div class="liability-value">' + liability.liability + '</div>'
-      + '<div class="liability-branch">' + (liability['분기']||'') + '</div>'
-      + (liability['과실비율'] ? '<div style="margin-top:6px;font-size:0.85rem;opacity:0.8">과실비율: ' + liability['과실비율'] + '</div>' : '')
-      + '</div>'
-      + '<div class="result-grid"><div>'
-      + (coverageRows ? '<div style="margin-bottom:14px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">담보별 판단</div><table class="coverage-table"><tr><th>담보</th><th>판단</th></tr>' + coverageRows + '</table></div>' : '')
-      + surchargeRows
-      + '</div><div>'
-      + (triggerTags ? '<div style="margin-bottom:12px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">감지된 면책 트리거</div><div class="tag-list">' + triggerTags + '</div></div>' : '')
-      + (clauseTags  ? '<div style="margin-bottom:12px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">약관 근거</div><div class="tag-list">' + clauseTags + '</div></div>' : '')
-      + (verdictTags ? '<div style="margin-bottom:12px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">판례 근거</div><div class="tag-list">' + verdictTags + '</div></div>' : '')
-      + (modifiers   ? '<div><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:6px">적용된 수정요소</div>' + modifiers + '</div>' : '')
-      + '</div></div>'
-      + (clauseDetails  ? '<div style="margin-top:16px;border-top:1px solid #e5e7eb;padding-top:14px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:8px">검색된 약관 조항</div>' + clauseDetails + '</div>' : '')
-      + (verdictDetails ? '<div style="margin-top:12px"><div style="font-size:0.8rem;color:#555;font-weight:600;margin-bottom:8px">검색된 판결문</div>' + verdictDetails + '</div>' : '');
-  })();
-
-  const PANELS = [panel0, panel1, panel2, panel3];
-
-  document.getElementById('mainArea').innerHTML = `
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2>📁 ${r.case_id || ''}</h2>
-        <div style="display:flex;gap:8px;align-items:center">
-          ${statusBadge(r.final_status)}
-          <button onclick="deleteCase('${r.case_id}')"
-            style="background:#fee2e2;color:#b91c1c;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.82rem">삭제</button>
-        </div>
-      </div>
-      ${stepperHTML}
-      <div id="stepPanels" style="margin-top:4px"></div>
-    </div>
-  `;
-
-  // 패널 표시 함수 (전역 등록)
-  window._panels = PANELS;
-  window.showPanel = function(idx) {
-    const el = document.getElementById('stepPanels');
-    if (!el) return;
-    // 이미 같은 패널이면 닫기
-    if (el.dataset.open === String(idx)) {
-      el.innerHTML = '';
-      el.dataset.open = '';
-      document.querySelectorAll('.step').forEach((s,i) => {
-        if (i === idx) s.classList.remove('panel-open');
-      });
+  try {
+    const res = await fetch(`${API}/api/cases/${caseId}/resume`, { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      hideLoading();
+      alert('오류 발생: ' + (err.detail || res.statusText));
       return;
     }
-    el.dataset.open = String(idx);
-    el.innerHTML = `<div class="step-panel">${window._panels[idx]}</div>`;
-    document.querySelectorAll('.step').forEach((s,i) => {
-      s.classList.toggle('panel-open', i === idx);
-    });
-  };
-
-  // 현재 활성 단계 자동 열기
-  window.showPanel(activeStep);
+    const result = await res.json();
+    hideLoading();
+    currentCaseId = result.case_id;
+    await loadCases();
+    renderWorkflowCanvas(result);
+  } catch (e) {
+    hideLoading();
+    alert('승인 중 오류 발생: ' + e.message);
+  }
 }
 
-// ── 삭제 ────────────────────────────────────────────
+// ── 사건 삭제 ───────────────────────────────────────
 async function deleteCase(caseId) {
-  if (!confirm(`${caseId} 사건을 삭제하시겠습니까?`)) return;
-  await fetch(`${API}/api/cases/${caseId}`, { method: 'DELETE' });
-  currentCaseId = null;
-  document.getElementById('mainArea').innerHTML = `
-    <div class="empty-state">
-      <div class="icon">🚗</div>
-      <div>새 사건을 접수하거나 목록에서 사건을 선택하세요</div>
-    </div>`;
-  await loadCases();
+  if (!confirm(`사건 ${caseId}번의 데이터를 서버에서 전면 삭제하시겠습니까?`)) return;
+  try {
+    await fetch(`${API}/api/cases/${caseId}`, { method: 'DELETE' });
+    currentCaseId = null;
+    currentCaseData = null;
+    activeAgentId = null;
+    showNewForm();
+    await loadCases();
+  } catch (e) {
+    alert('삭제 오류: ' + e.message);
+  }
 }
 
-// ── 로딩 ────────────────────────────────────────────
+// ── 카드 하이라이트 초기화 ───────────────────────────
+function resetAgentCardHighlights() {
+  document.querySelectorAll('.agent-card').forEach(card => {
+    card.style.borderWidth = '1.5px';
+  });
+}
+
+// ── 리셋 버튼 (초기 화면 복원) ────────────────────────
+function resetView() {
+  showNewForm();
+}
+
+// ── 로딩 마스크 제어 ─────────────────────────────────
 function showLoading(text) {
   document.getElementById('loadingText').textContent = text;
   document.getElementById('loading').classList.add('show');
@@ -714,17 +2591,18 @@ function hideLoading() {
   document.getElementById('loading').classList.remove('show');
 }
 
-// ── 이미지 확대 ─────────────────────────────────────
+// ── 이미지 확대 보기 ─────────────────────────────────
 function openImage(url) {
   const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
-  modal.innerHTML = `<img src="${url}" style="max-width:90vw;max-height:90vh;border-radius:8px">`;
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(11,35,80,0.9);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;backdrop-filter:blur(3px);';
+  modal.innerHTML = `<img src="${url}" style="max-width:90vw;max-height:90vh;border-radius:12px;border:3px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,0.5)">`;
   modal.onclick = () => modal.remove();
   document.body.appendChild(modal);
 }
 
-// ── 초기화 ──────────────────────────────────────────
+// ── 앱 기동 ──────────────────────────────────────────
 loadCases();
+showNewForm();
 </script>
 </body>
 </html>

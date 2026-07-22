@@ -35,3 +35,11 @@ insurance_index.pkl
 
 # 기타
 output/
+
+# 데이터베이스 및 로그 (RAG 인덱스 포함)
+index/chromadb/
+index/chromadb_fault/
+logs/
+test_report.json
+scratch/
+raw_data/

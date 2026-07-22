@@ -13,6 +13,9 @@ import json
 import os
 import uuid
 import sqlite3
+from dotenv import load_dotenv
+load_dotenv()
+os.environ["HF_HUB_OFFLINE"] = "1"
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -102,6 +105,7 @@ async def create_case(
     user_input: str              = Form(...),
     video_url:  str              = Form(""),
     extra_data: str              = Form(""),
+    manual_triggers: str         = Form(""),
     files:      List[UploadFile] = File(default=[]),
 ):
     case_id = "CASE-" + uuid.uuid4().hex[:8].upper()
@@ -116,11 +120,13 @@ async def create_case(
             image_urls.append("/" + dest)
 
     from graph.pipeline import run
+    triggers_list = [t.strip() for t in manual_triggers.split(",") if t.strip()] if manual_triggers else []
     result = run(
         user_input=user_input,
         case_id=case_id,
         video_url=video_url,
         extra_data=extra_data,
+        manual_triggers=triggers_list,
     )
     result["image_urls"] = image_urls
     _save_case(case_id, user_input, result)
@@ -129,12 +135,13 @@ async def create_case(
 
 @app.post("/api/cases/{case_id}/resume")
 async def resume_case(
-    case_id:    str,
-    extra_data: str              = Form(""),
-    files:      List[UploadFile] = File(default=[]),
+    case_id:         str,
+    extra_data:      str              = Form(""),
+    manual_triggers: str              = Form(""),
+    files:           List[UploadFile] = File(default=[]),
 ):
-    if not extra_data.strip():
-        raise HTTPException(400, "추가 자료 내용을 입력하세요.")
+    if not extra_data.strip() and not manual_triggers.strip():
+        raise HTTPException(400, "추가 자료 내용 또는 면책 설정 정보가 필요합니다.")
 
     image_urls = []
     for f in files:
@@ -146,7 +153,15 @@ async def resume_case(
             image_urls.append("/" + dest)
 
     from graph.pipeline import resume
-    result = resume(case_id=case_id, extra_data=extra_data)
+    triggers_list = None
+    if manual_triggers.strip() or not extra_data.strip():
+        triggers_list = [t.strip() for t in manual_triggers.split(",") if t.strip()]
+
+    result = resume(
+        case_id=case_id,
+        extra_data=extra_data,
+        manual_triggers=triggers_list,
+    )
 
     # 기존 이미지 목록에 합산
     prev_images = result.get("image_urls") or []
@@ -163,6 +178,36 @@ async def list_cases():
     """).fetchall()
     return [{"case_id":r[0],"accident_type":r[1],"final_status":r[2],
              "created_at":r[3],"updated_at":r[4]} for r in rows]
+
+
+@app.get("/api/search")
+async def search_rag(query: str, type: str = "clause", top_k: int = 5):
+    from graph.pipeline import get_models
+    _, search_agent, _, _ = get_models()
+    if type == "clause":
+        results = search_agent.search_clauses(query, top_k=top_k)
+        return [{
+            "article": r.get("article", ""),
+            "title": r.get("title", ""),
+            "text": r.get("text", ""),
+            "page": r.get("page", 0),
+            "coverage": r.get("coverage", ""),
+            "is_exemption": r.get("is_exemption", False),
+            "score": r.get("score", 0.0)
+        } for r in results]
+    else:
+        results = search_agent.search_verdicts(query, top_k=top_k)
+        return [{
+            "case_num": r.get("case_num", ""),
+            "court": r.get("court", ""),
+            "date": r.get("date", ""),
+            "issue": r.get("issue", ""),
+            "summary": r.get("summary", ""),
+            "full_text": r.get("full_text", ""),
+            "keywords": r.get("keywords", []),
+            "score": r.get("score", 0.0)
+        } for r in results]
+
 
 
 @app.get("/api/cases/{case_id}")
@@ -196,8 +241,8 @@ async def root():
 
 
 if __name__ == "__main__":
-    print("\n" + "═"*50)
-    print("  🚗 사고보상 Agent 서버")
+    print("\n" + "="*50)
+    print("  Claim Agent Server")
     print("  http://localhost:8080")
-    print("═"*50 + "\n")
+    print("="*50 + "\n")
     uvicorn.run("server:app", host="0.0.0.0", port=8080, reload=False)
